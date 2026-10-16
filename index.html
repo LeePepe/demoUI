@@ -10,6 +10,7 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+  <div class="ambient-field" aria-hidden="true"><span class="ambient-orbit"></span><span class="ambient-wash"></span></div>
   <svg class="svg-defs" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs>
     <symbol id="layers" viewBox="0 0 24 24"><path d="m3 8 9-5 9 5-9 5-9-5Zm0 5 9 5 9-5M3 18l9 5 9-5"/></symbol>
     <symbol id="arrow" viewBox="0 0 24 24"><path d="M5 12h14m-6-6 6 6-6 6"/></symbol>
@@ -24,13 +25,13 @@
   </defs></svg>
   <header class="masthead shell">
     <a class="wordmark" href="?color=blue&amp;mode=light" aria-label="Strata 岩层，恢复蓝色浅色主题"><span class="brandmark"><svg><use href="#layers"/></svg></span>strata<span class="wordmark-sub">岩层</span></a>
-    <span class="edition">DESIGN STUDY <span class="edition-number">001 / 2026</span></span>
-    <span class="prototype-badge">主题验证原型 <span>v0.1</span></span>
+    <span class="edition">DESIGN STUDY <span class="edition-number">002 / 2026</span></span>
+    <div class="header-actions"><button type="button" class="material-toggle" id="material-toggle" aria-pressed="true"><svg aria-hidden="true"><use href="#layers"/></svg><span id="material-label">玻璃</span></button><span class="prototype-badge">验证原型 <span>v0.2</span></span></div>
   </header>
   <main class="shell">
     <section class="intro" aria-labelledby="page-title">
       <div><p class="eyebrow">SHARED UI / THEME WORKBENCH</p><h1 id="page-title">色彩有性格，界面有秩序。</h1><p class="intro-copy">用同一组组件，观察五种糖果色在明暗之间的不同气质。</p></div>
-      <div class="intro-note"><span class="small-line"></span><p>哑光表面 · 明度分层 · 克制表达<br><span>一次关于共享设计语言的小实验</span></p></div>
+      <div class="intro-note"><span class="small-line"></span><p>通透材质 · 柔和折光 · 明度分层<br><span>Glass material study / 002</span></p></div>
     </section>
 
     <section class="theme-panel" aria-label="主题控制">
@@ -45,7 +46,7 @@
           <div class="section-heading"><h2 id="buttons-title"><span>01</span> Button <small>按钮</small></h2><span class="micro">ACTION & FEEDBACK</span></div>
           <div class="button-stage">
             <div class="button-line"><button type="button" class="button primary" id="save-demo"><svg><use href="#check"/></svg><span>保存示例</span></button><button type="button" class="button secondary" id="secondary-demo">Secondary</button><button type="button" class="button ghost" id="ghost-demo">Ghost <svg><use href="#arrow"/></svg></button></div>
-            <div class="button-line states"><span class="state-label">状态</span><button type="button" class="button secondary" disabled>Disabled</button><button type="button" class="button primary" disabled aria-label="Loading 加载状态示例"><span class="spinner" aria-hidden="true"></span>Loading</button><span class="caption">40px 高度 / 8px 圆角</span></div>
+            <div class="button-line states"><span class="state-label">状态</span><button type="button" class="button secondary" disabled>Disabled</button><button type="button" class="button primary" disabled aria-label="Loading 加载状态示例"><span class="spinner" aria-hidden="true"></span>Loading</button><span class="caption" id="control-spec">40px 高度 / 胶囊圆角</span></div>
           </div>
           <p class="section-note" id="button-feedback" role="status">点击「保存示例」，体验加载与完成反馈。</p>
         </section>
@@ -53,7 +54,7 @@
         <section class="specimen" aria-labelledby="cards-title">
           <div class="section-heading"><h2 id="cards-title"><span>02</span> Card <small>卡片</small></h2><span class="micro">CONTENT & SIGNAL</span></div>
           <div class="card-grid">
-            <article class="content-card"><div class="card-top"><span class="icon-tile"><svg><use href="#layers"/></svg></span><span class="sample-tag">示例内容</span></div><h3>让内容自然浮现</h3><p>背景、内容区与卡片依靠明度区分，给信息留出安静的位置。</p><div class="card-bottom"><span class="caption">基础内容卡</span><button type="button" class="text-action" id="card-demo">查看细节 <svg><use href="#arrow"/></svg></button></div></article>
+            <article class="content-card"><div class="card-top"><span class="icon-tile"><svg><use href="#layers"/></svg></span><span class="sample-tag">示例内容</span></div><h3>让内容轻盈浮现</h3><p>光与色穿过半透表面，文字保持清晰，层次自然显现。</p><div class="card-bottom"><span class="caption">基础内容卡</span><button type="button" class="text-action" id="card-demo">查看细节 <svg><use href="#arrow"/></svg></button></div></article>
             <article class="content-card stat-card"><div class="card-top"><span class="micro">主题探索进度</span><span class="sample-tag">模拟数据</span></div><div class="metric">72<span>%</span></div><div class="progress-track" role="img" aria-label="模拟探索进度 72%"><span></span></div><div class="stat-meta"><span class="status-pill"><svg><use href="#check"/></svg>进展顺利</span><span class="caption">18 / 25 项</span></div><div class="card-bottom"><span class="caption">信息 / 统计卡</span><span class="caption">仅作视觉演示</span></div></article>
           </div>
           <p class="section-note" id="card-feedback" role="status">内容与统计均为示例，不连接真实业务数据。</p>
@@ -74,7 +75,7 @@
         <section class="specimen tokens-section" aria-labelledby="tokens-title">
           <div class="section-heading"><h2 id="tokens-title"><span>04</span> Tokens <small>主题变量</small></h2><button type="button" class="text-action" id="download-tokens"><svg><use href="#download"/></svg>下载 JSON</button></div>
           <div class="token-preview" id="token-preview"></div>
-          <div class="token-footer"><span class="caption">间距 4 / 8 / 12 / 16 / 24 / 32</span><span class="caption">圆角 8 / 12 / 16</span></div>
+          <div class="token-footer"><span class="caption">间距 4 / 8 / 12 / 16 / 24 / 32</span><span class="caption" id="radius-spec">圆角 16 / 24 / 32</span></div>
           <div class="semantic-key" aria-label="独立语义状态"><span class="success">✓ 成功</span><span class="warning">△ 警告</span><span class="error">! 错误</span><span class="caption">语义色不随品牌切换</span></div>
         </section>
       </div>

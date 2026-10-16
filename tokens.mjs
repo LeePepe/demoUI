@@ -1,9 +1,9 @@
-// Strata 0.1 — custom colors inspired by classic candy-colored hardware.
+// Strata 0.2 — a glass material study with custom candy-inspired colors.
 // This is the only source of color values and shared dimensions.
 export const foundations = {
   font: { family: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif', mono: 'ui-monospace, SFMono-Regular, Consolas, monospace', body: '14px', small: '12px', label: '11px', title: '32px', heading: '18px', metric: '40px', line: '1.6' },
   space: { '1': '4px', '2': '8px', '3': '12px', '4': '16px', '6': '24px', '8': '32px' },
-  radius: { control: '8px', card: '12px', container: '16px', pill: '999px' },
+  radius: { control: '16px', card: '24px', container: '32px', pill: '999px', button: '999px' },
   motion: { quick: '140ms', feedback: '900ms', easing: 'cubic-bezier(.2,.8,.2,1)' },
   size: { control: '40px', icon: '18px', swatch: '28px', focus: '3px', hairline: '1px', content: '1232px', sidebar: '228px', palette: '64px' }
 };
@@ -17,18 +17,47 @@ export const palettes = {
 };
 
 const semantic = {
-  light: { text: { primary: '#232831', secondary: '#5B626C', onBrand: '#FFFFFF' }, border: '#CCD1D7', status: { success: '#276442', successSurface: '#EAF3EC', warning: '#795506', warningSurface: '#FAF1D8', error: '#AA3642', errorSurface: '#FBECEE' }, chart: { primary: '#527A91', secondary: '#9681A9', tertiary: '#B29C66' } },
-  dark: { text: { primary: '#F1F1F4', secondary: '#BCBBC5', onBrand: '#201C28' }, border: '#655F70', status: { success: '#A4D8B4', successSurface: '#293E33', warning: '#E5CD8F', warningSurface: '#423B28', error: '#F0AEB8', errorSurface: '#493039' }, chart: { primary: '#9DC4D6', secondary: '#BFAAD6', tertiary: '#D4BF92' } }
+  light: { text: { primary: '#232831', secondary: '#505864', onBrand: '#FFFFFF' }, border: '#C2C9D2', status: { success: '#276442', successSurface: '#EAF3EC', warning: '#795506', warningSurface: '#FAF1D8', error: '#AA3642', errorSurface: '#FBECEE' }, chart: { primary: '#527A91', secondary: '#9681A9', tertiary: '#B29C66' } },
+  dark: { text: { primary: '#F1F1F4', secondary: '#CAC8D1', onBrand: '#201C28' }, border: '#746D80', status: { success: '#A4D8B4', successSurface: '#293E33', warning: '#E5CD8F', warningSurface: '#423B28', error: '#F0AEB8', errorSurface: '#493039' }, chart: { primary: '#9DC4D6', secondary: '#BFAAD6', tertiary: '#D4BF92' } }
 };
 
-export function getTheme(color = 'blue', mode = 'light') {
+const withAlpha = (hex, alpha) => `${hex}${Math.round(alpha * 255).toString(16).padStart(2, '0')}`;
+
+// Materials have separate light/dark recipes. Opaque surface roles remain the
+// fallback and the backing color; never apply opacity to a container's text.
+function getMaterial(t, seed, mode, kind) {
+  const light = mode === 'light', glass = kind === 'glass';
+  const edge = light ? '#FFFFFFC7' : '#FFFFFF29';
+  const highlight = light ? '#FFFFFFB8' : '#FFFFFF1F';
+  const shade = light ? '#384B6310' : '#00000038';
+  return {
+    kind, panel: glass ? withAlpha(t.region, light ? .62 : .72) : t.region,
+    content: glass ? withAlpha(t.card, light ? .70 : .82) : t.card,
+    control: glass ? withAlpha(t.card, light ? .64 : .85) : t.card,
+    edge: glass ? edge : 'transparent', highlight: glass ? highlight : 'transparent',
+    innerEdge: glass ? (light ? '#FFFFFFA3' : '#FFFFFF17') : 'transparent',
+    innerInset: glass ? `inset 0 1px 0 ${light ? '#FFFFFF80' : '#FFFFFF12'}` : 'none',
+    sheen: glass ? `linear-gradient(155deg, ${highlight}, transparent 40%)` : 'none',
+    blur: glass ? '24px' : '0px', saturation: glass ? '125%' : '100%',
+    shadow: glass ? `0 8px 32px ${shade}` : 'none',
+    inset: glass ? `inset 0 1px 0 ${highlight}, inset 0 -1px 0 ${light ? '#FFFFFF33' : '#0000001F'}` : 'none',
+    ambient: withAlpha(seed, light ? .34 : .20), ambientSoft: withAlpha(seed, light ? .18 : .12),
+    ambientEdge: withAlpha(seed, light ? .42 : .28), ambientVisibility: glass ? '1' : '0',
+    ambientMobileScale: '.65',
+    ambientWidth: '600px', ambientHeight: '280px', ambientStroke: '56px', ambientBlur: '2px'
+  };
+}
+
+export function getTheme(color = 'blue', mode = 'light', material = 'glass') {
   if (!Object.hasOwn(palettes, color)) color = 'blue';
   if (!['light', 'dark'].includes(mode)) mode = 'light';
+  if (!['glass', 'solid'].includes(material)) material = 'glass';
   const p = palettes[color], t = p[mode], s = semantic[mode];
-  return { name: `Strata / ${p.name} / ${mode === 'light' ? '浅色' : '深色'}`, version: '0.1.0-prototype', color, mode, ...foundations,
+  return { name: `Strata / ${p.name} / ${mode === 'light' ? '浅色' : '深色'} / ${material === 'glass' ? '玻璃' : '实底'}`, version: '0.2.0-prototype', color, mode, ...foundations,
     surface: { page: t.page, region: t.region, card: t.card, inset: t.inset, hover: t.hoverSurface, selected: t.selected },
     text: s.text, brand: { seed: p.seed, seedInk: semantic.light.text.primary, primary: t.primary, hover: t.hover, active: t.active, subtle: t.subtle, text: t.text },
-    status: s.status, chart: s.chart, border: { default: s.border }, focus: { ring: t.primary }
+    status: s.status, chart: s.chart, border: { default: s.border }, focus: { ring: t.primary },
+    material: getMaterial(t, p.seed, mode, material)
   };
 }
 
