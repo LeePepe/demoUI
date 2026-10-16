@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Strata · 岩层，使用五种糖果色和明度层次验证共享 UI 主题的交互原型。">
+  <link rel="icon" href="data:,">
+  <title>Strata · 岩层 — 主题验证工作台</title>
+  <script type="module" src="app.mjs"></script>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <svg class="svg-defs" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs>
+    <symbol id="layers" viewBox="0 0 24 24"><path d="m3 8 9-5 9 5-9 5-9-5Zm0 5 9 5 9-5M3 18l9 5 9-5"/></symbol>
+    <symbol id="arrow" viewBox="0 0 24 24"><path d="M5 12h14m-6-6 6 6-6 6"/></symbol>
+    <symbol id="check" viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/></symbol>
+    <symbol id="download" viewBox="0 0 24 24"><path d="M12 3v12m-5-5 5 5 5-5M4 16v4h16v-4"/></symbol>
+    <symbol id="sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.5 1.5m11 11L19 19M5 19l1.5-1.5m11-11L19 5"/></symbol>
+    <symbol id="moon" viewBox="0 0 24 24"><path d="M20 14a8.5 8.5 0 0 1-10-10A8.5 8.5 0 1 0 20 14Z"/></symbol>
+    <symbol id="grid" viewBox="0 0 24 24"><rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><rect x="14" y="14" width="6" height="6" rx="1"/></symbol>
+    <symbol id="type" viewBox="0 0 24 24"><path d="M4 5h16M12 5v15m-4 0h8"/></symbol>
+    <symbol id="circle" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 4a8 8 0 0 1 0 16Z"/></symbol>
+    <symbol id="clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 7v5l3 2"/></symbol>
+  </defs></svg>
+  <header class="masthead shell">
+    <a class="wordmark" href="?color=blue&amp;mode=light" aria-label="Strata 岩层，恢复蓝色浅色主题"><span class="brandmark"><svg><use href="#layers"/></svg></span>strata<span class="wordmark-sub">岩层</span></a>
+    <span class="edition">DESIGN STUDY <span class="edition-number">001 / 2026</span></span>
+    <span class="prototype-badge">主题验证原型 <span>v0.1</span></span>
+  </header>
+  <main class="shell">
+    <section class="intro" aria-labelledby="page-title">
+      <div><p class="eyebrow">SHARED UI / THEME WORKBENCH</p><h1 id="page-title">色彩有性格，界面有秩序。</h1><p class="intro-copy">用同一组组件，观察五种糖果色在明暗之间的不同气质。</p></div>
+      <div class="intro-note"><span class="small-line"></span><p>哑光表面 · 明度分层 · 克制表达<br><span>一次关于共享设计语言的小实验</span></p></div>
+    </section>
+
+    <section class="theme-panel" aria-label="主题控制">
+      <div class="theme-current"><span class="theme-chip" aria-hidden="true"><svg><use href="#layers"/></svg></span><div><span class="micro">CURRENT THEME</span><h2 id="theme-name">潮汐蓝 / 浅色</h2><p id="theme-english">Tidal blue · Light</p></div></div>
+      <fieldset class="palette-control"><legend>强调色 <span>五种色彩，一套结构</span></legend><div id="palette-options" class="palette-options"></div></fieldset>
+      <fieldset class="mode-control"><legend>明暗模式</legend><div class="segmented"><button type="button" data-mode="light" aria-pressed="true"><svg><use href="#sun"/></svg>浅色</button><button type="button" data-mode="dark" aria-pressed="false"><svg><use href="#moon"/></svg>深色</button></div></fieldset>
+    </section>
+
+    <div class="workbench">
+      <div class="left-column">
+        <section class="specimen buttons-section" aria-labelledby="buttons-title">
+          <div class="section-heading"><h2 id="buttons-title"><span>01</span> Button <small>按钮</small></h2><span class="micro">ACTION & FEEDBACK</span></div>
+          <div class="button-stage">
+            <div class="button-line"><button type="button" class="button primary" id="save-demo"><svg><use href="#check"/></svg><span>保存示例</span></button><button type="button" class="button secondary" id="secondary-demo">Secondary</button><button type="button" class="button ghost" id="ghost-demo">Ghost <svg><use href="#arrow"/></svg></button></div>
+            <div class="button-line states"><span class="state-label">状态</span><button type="button" class="button secondary" disabled>Disabled</button><button type="button" class="button primary" disabled aria-label="Loading 加载状态示例"><span class="spinner" aria-hidden="true"></span>Loading</button><span class="caption">40px 高度 / 8px 圆角</span></div>
+          </div>
+          <p class="section-note" id="button-feedback" role="status">点击「保存示例」，体验加载与完成反馈。</p>
+        </section>
+
+        <section class="specimen" aria-labelledby="cards-title">
+          <div class="section-heading"><h2 id="cards-title"><span>02</span> Card <small>卡片</small></h2><span class="micro">CONTENT & SIGNAL</span></div>
+          <div class="card-grid">
+            <article class="content-card"><div class="card-top"><span class="icon-tile"><svg><use href="#layers"/></svg></span><span class="sample-tag">示例内容</span></div><h3>让内容自然浮现</h3><p>背景、内容区与卡片依靠明度区分，给信息留出安静的位置。</p><div class="card-bottom"><span class="caption">基础内容卡</span><button type="button" class="text-action" id="card-demo">查看细节 <svg><use href="#arrow"/></svg></button></div></article>
+            <article class="content-card stat-card"><div class="card-top"><span class="micro">主题探索进度</span><span class="sample-tag">模拟数据</span></div><div class="metric">72<span>%</span></div><div class="progress-track" role="img" aria-label="模拟探索进度 72%"><span></span></div><div class="stat-meta"><span class="status-pill"><svg><use href="#check"/></svg>进展顺利</span><span class="caption">18 / 25 项</span></div><div class="card-bottom"><span class="caption">信息 / 统计卡</span><span class="caption">仅作视觉演示</span></div></article>
+          </div>
+          <p class="section-note" id="card-feedback" role="status">内容与统计均为示例，不连接真实业务数据。</p>
+        </section>
+      </div>
+
+      <div class="right-column">
+        <section class="specimen" aria-labelledby="list-title">
+          <div class="section-heading"><h2 id="list-title"><span>03</span> List <small>列表</small></h2><span class="micro">NAVIGATION & STATE</span></div>
+          <div class="list-card"><div class="list-card-heading"><h3>设计笔记</h3><span class="sample-tag">示例列表</span></div><div class="list-options" aria-label="选择设计笔记">
+            <button type="button" class="list-row" data-note="表面与层次" aria-pressed="true"><span class="list-icon"><svg><use href="#layers"/></svg></span><span class="row-copy"><strong>表面与层次</strong><span>用明度建立空间秩序</span></span><span class="row-end"><span class="selected-mark"><svg><use href="#check"/></svg>已选</span><span class="unselected-mark">04 项</span></span></button>
+            <button type="button" class="list-row" data-note="色彩与语义" aria-pressed="false"><span class="list-icon"><svg><use href="#circle"/></svg></span><span class="row-copy"><strong>色彩与语义</strong><span>品牌、状态与图表各司其职</span></span><span class="row-end"><span class="selected-mark"><svg><use href="#check"/></svg>已选</span><span class="unselected-mark">05 色</span></span></button>
+            <button type="button" class="list-row" data-note="文字与节奏" aria-pressed="false"><span class="list-icon"><svg><use href="#type"/></svg></span><span class="row-copy"><strong>文字与节奏</strong><span>让阅读轻松，让重点清晰</span></span><span class="row-end"><span class="selected-mark"><svg><use href="#check"/></svg>已选</span><span class="unselected-mark">14 px</span></span></button>
+          </div><div class="list-footer"><span class="caption" id="list-feedback" role="status">当前：表面与层次</span><span class="caption">点击切换</span></div></div>
+          <p class="section-note">悬停轻提亮；选中加深表面，并显示「✓ 已选」。</p>
+        </section>
+
+        <section class="specimen tokens-section" aria-labelledby="tokens-title">
+          <div class="section-heading"><h2 id="tokens-title"><span>04</span> Tokens <small>主题变量</small></h2><button type="button" class="text-action" id="download-tokens"><svg><use href="#download"/></svg>下载 JSON</button></div>
+          <div class="token-preview" id="token-preview"></div>
+          <div class="token-footer"><span class="caption">间距 4 / 8 / 12 / 16 / 24 / 32</span><span class="caption">圆角 8 / 12 / 16</span></div>
+          <div class="semantic-key" aria-label="独立语义状态"><span class="success">✓ 成功</span><span class="warning">△ 警告</span><span class="error">! 错误</span><span class="caption">语义色不随品牌切换</span></div>
+        </section>
+      </div>
+    </div>
+    <footer class="page-footer"><p>STRATA · 岩层 <span>以色彩观察气质，以层次维持秩序。</span></p><p>主题验证原型 / 非生产规范</p></footer>
+  </main>
+  <div class="sr-only" id="announcement" role="status" aria-live="polite"></div>
+  <noscript>请启用 JavaScript 以加载主题和演示交互。</noscript>
+</body>
+</html>
