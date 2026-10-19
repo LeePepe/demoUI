@@ -106,7 +106,8 @@ context() { python3 -I -B "$shared_ci/scripts/context/_context.py" "$@"; }
 
 context audit
 python3 -I -B "$shared_ci/scripts/lint/workflows.py" --root .
-bash -n scripts/verify .githooks/pre-push
+bash -n scripts/verify
+bash -n .githooks/pre-push
 
 if [ "${1:-}" = "--all" ]; then
     layers="$(context layers --all)"
