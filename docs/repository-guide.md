@@ -33,8 +33,8 @@ callers pass this complete file as rules-file and never execute PR head code.
 
 Current status: caller wiring is a local candidate; remote, Actions, runner,
 required checks and protected approvals have no live acceptance evidence.
-Private entitlement and App installation access must be read back for the actual
-repository. A personal-account runner is repository-scoped: another repository's
+The public repository choice and initial seed/bootstrap scheme are approved.
+App installation access must still be read back for the actual repository. A personal-account runner is repository-scoped: another repository's
 registration cannot be moved, shared or reused. New runner/host/credential work
 requires a separately defined external Owner prerequisite; this bootstrap does
 not authorize registration, services, credentials or host changes.
@@ -46,9 +46,10 @@ Its five color families, light/dark, glass/solid, simulated interactions and
 fallback evidence are historical reference, not production Swift token authority.
 Do not copy those palettes into the future native App. The unified external
 shared-design-system owns production tokens and both public Swift products.
-No token change, shared provider/gate change, release, product migration, native
-shell, UI feature, remote creation, visibility change or local directory move is
-part of this local governance candidate. A missing prerequisite is reported to
+This governance diff adds no token change, shared provider/gate change, release,
+product migration, native shell or UI feature. Approved public remote creation
+and exact seed import are separate S1 operations. Live settings and local
+directory move remain later stages. A missing prerequisite is reported to
 the assigning lead; do not repair outside owned paths or reduce acceptance.
 Actual policy/gate/permission changes and protected paths need Owner approval.
 Never commit credentials, local evidence or machine-specific identity paths.
@@ -88,10 +89,11 @@ declared-base, retarget and rebase rules after squash. Follow-ups are separate
 work. PRM follows existing CI/review outcomes without a size or scope gate.
 
 
-### First-governance bootstrap: proposed exception, currently unapproved
+### First-governance bootstrap: initial scheme approved, final exception pending
 
-D1 chooses creation/visibility of the independent demoUI remote only. It does
-not approve D3. The sole initial main candidate is existing prototype commit
+Owner approved D1 creation of the independent public demoUI remote and separately
+approved D3 initial exact seed import and the staged bootstrap scheme. The sole
+initial main candidate is existing prototype commit
 b4bff430517ed2e2944f814d8b5ab89a1866ee33, preserving ancestor
 13a8fec56cea32611f38258fa846800936b9582a. No orphan seed, rewritten prototype
 history or direct governance push to main is allowed.
@@ -99,12 +101,16 @@ history or direct governance push to main is allowed.
 D3 has an initial decision about exact seed import and the proposed staged
 bootstrap, followed by a final one-PR exception decision bound to exact PR head,
 diff, independent verdict, successful quality and Owner protected-path approval.
-Neither decision is presently granted. D1 alone permits no seed import or merge.
+The initial decision is approved; the final one-PR exception remains unapproved.
+The initial approvals do not grant live settings or a governance merge.
 
 1. S0 is local candidate/verification/final body/Owner packet and independent
    review only. It does not complete T07 or unlock T08.
-2. S1 requires explicit D1 and D3 plus verified capabilities before creation
-   and ordinary-hook seed push. Only the exact seed becomes initial main.
+2. S1 has explicit D1/public and D3 initial approval. The assigned writer uses
+   the App route for the approved creation attempt, verifies an empty public
+   remote and ordinary access, then uses the ordinary hook to push only the
+   exact seed as initial main. Capability failure returns to the lead; do not
+   switch identities, overwrite an existing repository or infer access from 404.
 3. S2 Owner applies the approved initial ruleset: deletion and non-fast-forward
    blocked, PR required, at least one approval, code-owner review, no bypass
    actors and quality / aggregate required; auto-merge enabled. The seed has
