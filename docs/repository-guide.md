@@ -112,7 +112,7 @@ The initial approvals do not grant live settings or a governance merge.
    exact seed as initial main. Capability failure returns to the lead; do not
    switch identities, overwrite an existing repository or infer access from 404.
 3. S2 Owner applies the approved initial ruleset: deletion and non-fast-forward
-   blocked, PR required, at least one approval, code-owner review, no bypass
+   blocked, PR required, approvals 0, no code-owner review, no bypass
    actors and quality / aggregate required; auto-merge enabled. The seed has
    no CODEOWNERS, so exact-head human Owner evidence is mandatory; do not claim
    platform code-owner enforcement for that first PR. Push the governance branch
@@ -133,7 +133,7 @@ The initial approvals do not grant live settings or a governance merge.
 6. S5 only after independent confirmation of both probes may Owner approve and
    apply the final ruleset adding codex-review-gate while preserving all initial
    protection. Read back effective rules, details, default branch, auto-merge,
-   App access, runner status and main CODEOWNERS. Only then may independent
+   App access and runner status. Only then may independent
    acceptance complete T07 and unlock T08. Authorized local rename/repair follows
    with before/after receipts; this candidate performs neither.
 
