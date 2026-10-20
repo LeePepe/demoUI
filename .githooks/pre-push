@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+# Same entry as CI. Use command-scoped core.hooksPath after inspecting existing hooks.
+set -euo pipefail
+exec "$(git rev-parse --show-toplevel)/scripts/verify"

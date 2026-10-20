@@ -1,6 +1,12 @@
-# Strata · 岩层
+# demoUI · Strata 岩层
 
 共享 UI 主题验证网页原型：通透 Glass 材质、圆润轮廓、明度分层与糖果强调色。自定义配色受到经典 iMac / iPhone 5C 启发，不是 Apple 官方设计系统或原生应用；当前结果尚未作为生产规范。
+
+## 仓库入口
+
+[开发与 PR 规范](docs/development.md) · [仓库协议、验证与交付](docs/repository-guide.md) · [架构与路径归属](docs/architecture/tech-context.md) · [Agent 目录](AGENTS.md)。
+
+当前仅保留网页原型并准备 demoUI 治理入口；原生 iOS/macOS 展示 App 与共享 Swift package 消费由后续 T08 实施。以下启动、截图和历史记录属于原型参考。
 
 ## 本地启动
 
