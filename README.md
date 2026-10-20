@@ -49,3 +49,8 @@ python3 -m http.server 4173 --bind 127.0.0.1
 ## 延续任务
 
 实现与截图保存在 `codex/strata-theme` 专用分支；主 checkout 保持未提交的初始状态，未配置 remote。后续迭代直接使用任务 worktree，先核实分支和未提交改动。博客文章使用博客仓库的独立分支 `codex/strata-theme-post`，不要在此仓库配置博客 remote。
+
+## Trusted review probe
+
+This temporary draft checks that disabled review fails closed and that the same
+head passes after a real Codex review. Close this probe without merging it.
