@@ -8,7 +8,7 @@
 
 ## Protocol
 
-- For the pinned shared contract: [Agent protocol](https://github.com/LeePepe/shared-ci/blob/6e354f476bc53d68f0f09fc231d5cd938466af9c/ai/agent-protocol.md)
+- For the pinned shared contract: [Agent protocol](https://github.com/LeePepe/shared-ci/blob/88c09b3f68ceea82a4ca979c689e3dc50266ee10/ai/agent-protocol.md)
 
 ## Verify
 
