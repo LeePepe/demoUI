@@ -1,6 +1,6 @@
 {
   "schema": 1,
   "guide": "docs/repository-guide.md",
-  "shared_ci": "88c09b3f68ceea82a4ca979c689e3dc50266ee10",
+  "shared_ci": "fd8a187ef4872aa1aa69c4e9afec9782183cc02d",
   "dependencies": {}
 }
