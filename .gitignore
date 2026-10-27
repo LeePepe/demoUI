@@ -5,4 +5,9 @@ node_modules/
 app/.build/
 app/.swiftpm/
 app/*.xcodeproj/
+config/Signing.local.xcconfig
+fastlane/report.xml
+fastlane/test_output/
+*.ipa
+*.dSYM.zip
 *.DS_Store

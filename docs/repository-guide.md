@@ -89,6 +89,17 @@ python3 scripts/sync-strata.py --reset-override
 Use `python3 scripts/sync-strata.py --check` to verify that metadata, the Swift
 manifest, and the lockfile agree.
 
+### TestFlight release wiring
+
+The `testflight` workflow runs after successful `ci` on `main`, on the
+scheduled cadence, or by manual dispatch. `scripts/testflight-gate.py` checks
+the `testflight/last-released..HEAD` range and releases only when native app or
+release dependency paths changed (unless manually forced). The self-hosted
+release job fails closed when App Store Connect, keychain, bundle, or team
+configuration is absent; credentials are supplied only through repository
+secrets/variables. Local signing overrides belong in the ignored
+`config/Signing.local.xcconfig`, copied from the committed example.
+
 ### Review-relevant development extract
 
 One goal per PR: start Intent with `After this PR, <observable outcome>`.

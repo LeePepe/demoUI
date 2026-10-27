@@ -76,6 +76,15 @@ python3 scripts/sync-strata.py --reset-override
 python3 scripts/sync-strata.py --check
 ```
 
+### TestFlight release
+
+The `testflight` workflow generates `app/DemoUI.xcodeproj` with XcodeGen,
+archives the iOS `DemoUI` target through Fastlane, and uploads the result to
+TestFlight after the release gate passes. Configure the repository's
+App Store Connect secrets and `DEMOUI_BUNDLE_ID` / `DEMOUI_TEAM_ID` variables;
+local archives can use an ignored `config/Signing.local.xcconfig` copied from
+`config/Signing.example.xcconfig`.
+
 ## Delivery
 
 Use the repository PR template with the exact tested head. Keep evidence outside

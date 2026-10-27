@@ -14,8 +14,12 @@ targets:
     sources:
       - Sources/StrataShowcase
       - Sources/StrataShowcaseApp
+    configFiles:
+      Debug: ../config/Signing.local.xcconfig
+      Release: ../config/Signing.local.xcconfig
     settings:
-      PRODUCT_BUNDLE_IDENTIFIER: LeePepe.DemoUI
+      PRODUCT_BUNDLE_IDENTIFIER: "$(DEMOUI_BUNDLE_ID)"
+      DEVELOPMENT_TEAM: "$(DEMOUI_TEAM_ID)"
       SWIFT_VERSION: "6.0"
     dependencies:
       - package: shared-design-system
