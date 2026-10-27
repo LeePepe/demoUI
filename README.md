@@ -68,4 +68,16 @@ python3 scripts/sync-strata.py --reset-override
 `sync-strata` workflow 会在 shared-design-system 更新或定时追赶时运行
 `scripts/verify --all`，并为新的 exact revision 打开依赖 / pin PR。
 
+TestFlight 发布：
+
+```sh
+python3 scripts/testflight-gate.py --check-contract --dry-run
+fastlane ios beta
+```
+
+`testflight` workflow 在 `main` 的 CI 成功、定时触发或手动强制时运行；
+它只从仓库 secrets / variables 读取签名配置，并在上传成功后更新
+`testflight/last-released` tag。复制 `config/Signing.example.xcconfig` 为被
+忽略的 `config/Signing.local.xcconfig` 可用于本地归档。
+
 实现与截图保存在 `codex/strata-theme` 专用分支；主 checkout 保持未提交的初始状态，未配置 remote。后续迭代直接使用任务 worktree，先核实分支和未提交改动。博客文章使用博客仓库的独立分支 `codex/strata-theme-post`，不要在此仓库配置博客 remote。

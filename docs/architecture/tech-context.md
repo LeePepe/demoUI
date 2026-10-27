@@ -7,6 +7,8 @@ support:
     reason: shared-design-system pin synchronization and local live-link support
   - patterns: [".github/**", ".githooks/pre-push", "scripts/verify"]
     reason: governance wiring; contract audit, workflow lint, shell syntax and actual hook verification
+  - patterns: ["config/Signing.example.xcconfig", "fastlane/**", "scripts/testflight-gate.py"]
+    reason: TestFlight signing examples, Fastlane release lane and release decision gate
   - patterns: [".gitignore"]
     reason: cache and local-artifact exclusions; contract audit and diff review
 red_lines:
