@@ -23,6 +23,8 @@ final class StrataTestFlightGateTests: XCTestCase {
         XCTAssertTrue(project.contains("CODE_SIGN_STYLE: Manual"))
         XCTAssertTrue(project.contains("CODE_SIGN_IDENTITY: Apple Distribution"))
         XCTAssertTrue(project.contains("PROVISIONING_PROFILE_SPECIFIER: $(DEMOUI_PROFILE_SPECIFIER)"))
+        XCTAssertTrue(project.contains("INFOPLIST_KEY_CFBundleDisplayName: DemoUI"))
+        XCTAssertTrue(project.contains("INFOPLIST_KEY_ITSAppUsesNonExemptEncryption: false"))
 
         let workflow = try String(
             contentsOf: repositoryRoot.appendingPathComponent(".github/workflows/testflight.yml"),
@@ -37,6 +39,10 @@ final class StrataTestFlightGateTests: XCTestCase {
         )
         XCTAssertTrue(workflow.contains("security unlock-keychain"))
         XCTAssertTrue(workflow.contains("security set-key-partition-list"))
+        XCTAssertTrue(
+            workflow.contains("security show-keychain-info \"$HOME/Library/Keychains/login.keychain-db\"")
+        )
+        XCTAssertTrue(workflow.contains("Login keychain is locked and KEYCHAIN_PASSWORD secret is not set."))
         XCTAssertTrue(workflow.contains("brew list fastlane"))
         XCTAssertTrue(workflow.contains("brew list xcodegen"))
         XCTAssertTrue(workflow.contains("FASTLANE_SKIP_UPDATE_CHECK: \"1\""))

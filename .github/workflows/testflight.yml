@@ -68,9 +68,12 @@ jobs:
           [ -n "${ASC_KEY_ID:-}" ] || { echo "ASC_KEY_ID is required" >&2; exit 1; }
           [ -n "${ASC_ISSUER_ID:-}" ] || { echo "ASC_ISSUER_ID is required" >&2; exit 1; }
           [ -n "${ASC_KEY_P8_BASE64:-}" ] || { echo "ASC_KEY_P8_BASE64 is required" >&2; exit 1; }
-          [ -n "${KEYCHAIN_PASSWORD:-}" ] || { echo "KEYCHAIN_PASSWORD is required" >&2; exit 1; }
           [ -n "${DEMOUI_BUNDLE_ID:-}" ] || { echo "DEMOUI_BUNDLE_ID is required" >&2; exit 1; }
           [ -n "${DEMOUI_TEAM_ID:-}" ] || { echo "DEMOUI_TEAM_ID is required" >&2; exit 1; }
+          if [ -z "${KEYCHAIN_PASSWORD:-}" ] && ! security show-keychain-info "$HOME/Library/Keychains/login.keychain-db" >/dev/null 2>&1; then
+            echo "KEYCHAIN_PASSWORD is required when the login keychain is locked" >&2
+            exit 1
+          fi
 
       - name: Ensure fastlane + xcodegen
         if: steps.gate.outputs.release == 'true'
@@ -86,16 +89,21 @@ jobs:
         run: |
           set -euo pipefail
           KC="$HOME/Library/Keychains/login.keychain-db"
-          if ! security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KC" 2>/tmp/kc-unlock.err; then
-            echo "::error::Failed to unlock login keychain — check KEYCHAIN_PASSWORD secret."
-            cat /tmp/kc-unlock.err >&2 || true
+          if [ -n "${KEYCHAIN_PASSWORD:-}" ]; then
+            if ! security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KC" 2>/tmp/kc-unlock.err; then
+              echo "::error::Failed to unlock login keychain — check KEYCHAIN_PASSWORD secret."
+              cat /tmp/kc-unlock.err >&2 || true
+              exit 1
+            fi
+            security set-keychain-settings "$KC"
+            EXISTING=$(security list-keychains -d user | sed -e 's/^[[:space:]]*"//' -e 's/"$//')
+            security list-keychains -d user -s $(printf '%s\n' "$KC" $EXISTING | awk '!seen[$0]++')
+            security set-key-partition-list -S apple-tool:,apple:,codesign: \
+              -s -k "$KEYCHAIN_PASSWORD" "$KC" >/dev/null 2>&1 || true
+          elif ! security show-keychain-info "$KC" >/dev/null 2>&1; then
+            echo "::error::Login keychain is locked and KEYCHAIN_PASSWORD secret is not set."
             exit 1
           fi
-          security set-keychain-settings "$KC"
-          EXISTING=$(security list-keychains -d user | sed -e 's/^[[:space:]]*"//' -e 's/"$//')
-          security list-keychains -d user -s $(printf '%s\n' "$KC" $EXISTING | awk '!seen[$0]++')
-          security set-key-partition-list -S apple-tool:,apple:,codesign: \
-            -s -k "$KEYCHAIN_PASSWORD" "$KC" >/dev/null 2>&1 || true
 
       - name: Build and upload beta
         if: steps.gate.outputs.release == 'true'

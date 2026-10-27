@@ -1,6 +1,9 @@
 import Foundation
-import StrataShowcase
 import SwiftUI
+
+#if canImport(StrataShowcase)
+import StrataShowcase
+#endif
 
 #if os(macOS)
 import AppKit
@@ -43,7 +46,9 @@ struct StrataShowcaseApp: App {
                     .padding()
             }
         }
+        #if os(macOS)
         .defaultSize(width: 1200, height: 860)
+        #endif
     }
 
     @MainActor
