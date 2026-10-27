@@ -10,6 +10,7 @@ final class StrataTestFlightGateTests: XCTestCase {
         )
         XCTAssertTrue(exampleSigning.contains("DEMOUI_BUNDLE_ID = com.example.demoui"))
         XCTAssertTrue(exampleSigning.contains("DEMOUI_TEAM_ID = ZZZZZZZZZZ"))
+        XCTAssertTrue(exampleSigning.contains("DEMOUI_PROFILE_SPECIFIER = DemoUI App Store"))
 
         let project = try String(
             contentsOf: repositoryRoot.appendingPathComponent("app/project.yml"),
@@ -18,6 +19,10 @@ final class StrataTestFlightGateTests: XCTestCase {
         XCTAssertTrue(project.contains("Signing.local.xcconfig"))
         XCTAssertTrue(project.contains("PRODUCT_BUNDLE_IDENTIFIER: \"$(DEMOUI_BUNDLE_ID)\""))
         XCTAssertTrue(project.contains("DEVELOPMENT_TEAM: \"$(DEMOUI_TEAM_ID)\""))
+        XCTAssertTrue(project.contains("CODE_SIGN_STYLE: Automatic"))
+        XCTAssertTrue(project.contains("CODE_SIGN_STYLE: Manual"))
+        XCTAssertTrue(project.contains("CODE_SIGN_IDENTITY: Apple Distribution"))
+        XCTAssertTrue(project.contains("PROVISIONING_PROFILE_SPECIFIER: $(DEMOUI_PROFILE_SPECIFIER)"))
 
         let workflow = try String(
             contentsOf: repositoryRoot.appendingPathComponent(".github/workflows/testflight.yml"),
@@ -30,6 +35,13 @@ final class StrataTestFlightGateTests: XCTestCase {
                 "github.event.pull_request == null || github.event.pull_request.head.repo.full_name == github.repository"
             )
         )
+        XCTAssertTrue(workflow.contains("security unlock-keychain"))
+        XCTAssertTrue(workflow.contains("security set-key-partition-list"))
+        XCTAssertTrue(workflow.contains("brew list fastlane"))
+        XCTAssertTrue(workflow.contains("brew list xcodegen"))
+        XCTAssertTrue(workflow.contains("FASTLANE_SKIP_UPDATE_CHECK: \"1\""))
+        XCTAssertTrue(workflow.contains("FASTLANE_XCODEBUILD_SETTINGS_TIMEOUT: \"120\""))
+        XCTAssertTrue(workflow.contains("FASTLANE_XCODEBUILD_SETTINGS_RETRIES: \"6\""))
         for variable in [
             "ASC_KEY_ID",
             "ASC_ISSUER_ID",
@@ -40,6 +52,16 @@ final class StrataTestFlightGateTests: XCTestCase {
         ] {
             XCTAssertTrue(workflow.contains(variable), "missing \(variable)")
         }
+
+        let fastlane = try String(
+            contentsOf: repositoryRoot.appendingPathComponent("fastlane/Fastfile"),
+            encoding: .utf8
+        )
+        XCTAssertTrue(fastlane.contains("repo_root = File.expand_path(\"..\", __dir__)"))
+        XCTAssertTrue(fastlane.contains("in_house: false"))
+        XCTAssertTrue(fastlane.contains("get_provisioning_profile"))
+        XCTAssertTrue(fastlane.contains("latest_testflight_build_number"))
+        XCTAssertTrue(fastlane.contains("signingStyle: \"manual\""))
 
         let contract = try runScript(
             ["--check-contract", "--dry-run"],

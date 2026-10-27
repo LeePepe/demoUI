@@ -82,8 +82,10 @@ The `testflight` workflow generates `app/DemoUI.xcodeproj` with XcodeGen,
 archives the iOS `DemoUI` target through Fastlane, and uploads the result to
 TestFlight after the release gate passes. Configure the repository's
 App Store Connect secrets and `DEMOUI_BUNDLE_ID` / `DEMOUI_TEAM_ID` variables;
-local archives can use an ignored `config/Signing.local.xcconfig` copied from
-`config/Signing.example.xcconfig`.
+the workflow unlocks the runner's login keychain and uses Manual
+`Apple Distribution` signing with a fetched `DemoUI App Store` provisioning
+profile. Local archives can use an ignored `config/Signing.local.xcconfig`
+copied from `config/Signing.example.xcconfig`.
 
 ## Delivery
 
