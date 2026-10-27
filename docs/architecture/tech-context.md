@@ -9,7 +9,7 @@ support:
     reason: cache and local-artifact exclusions; contract audit and diff review
 red_lines:
   - Preserve the historical prototype and all design evidence.
-  - No native App or shared-package dependency is implemented by this bootstrap.
+  - ShowcaseApp consumes Strata and DesignTokens one-way from the pinned shared-design-system package; Prototype never imports ShowcaseApp.
 ---
 
 # demoUI architecture
@@ -17,6 +17,7 @@ red_lines:
 | Layer | Responsibility | tech-context | depends_on |
 | --- | --- | --- | --- |
 | Prototype | Historical browser theme workbench and its design evidence | `prototype/tech-context.md` | (none) |
+| ShowcaseApp | Native SwiftUI Strata component showcase consuming shared-design-system | `app/tech-context.md` | (none) |
 
 The root map itself is excluded by the resolver. Support entries are explicit
 non-layer material with the checks named above. The verify script is support

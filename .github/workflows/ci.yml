@@ -18,7 +18,7 @@ jobs:
   quality:
     uses: LeePepe/shared-ci/.github/workflows/quality.yml@fd8a187ef4872aa1aa69c4e9afec9782183cc02d
     with:
-      runs-on: ubuntu-latest
+      runs-on: macos-15
       setup-command: ""
       changed-only: false
       verify-command: scripts/verify --all

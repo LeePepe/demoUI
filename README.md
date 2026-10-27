@@ -6,7 +6,7 @@
 
 [开发与 PR 规范](docs/development.md) · [仓库协议、验证与交付](docs/repository-guide.md) · [架构与路径归属](docs/architecture/tech-context.md) · [Agent 目录](AGENTS.md)。
 
-当前仅保留网页原型并准备 demoUI 治理入口；原生 iOS/macOS 展示 App 与共享 Swift package 消费由后续 T08 实施。以下启动、截图和历史记录属于原型参考。
+当前同时提供网页原型与原生 Strata showcase package；网页启动、截图和历史记录仍属于原型参考。
 
 ## 本地启动
 
@@ -47,5 +47,14 @@ python3 -m http.server 4173 --bind 127.0.0.1
 当前为 v0.2 Glass。v0.1 哑光截图保留在 `design/screenshots/` 根目录，供对照。形状规则：胶囊按钮与分段开关、圆形色板、16px 普通控件 / 24px 卡片 / 32px 容器。
 
 ## 延续任务
+
+原生 showcase：
+
+```sh
+swift test --package-path app
+swift run --package-path app StrataShowcaseApp --export-screenshots /tmp/strata-showcase
+```
+
+`app/Package.swift` 固定消费 `shared-design-system` 的 exact revision，并通过 `Strata` 与 `DesignTokens` 提供五品牌、双外观、Solid/Glass 和四数据状态的组件目录。
 
 实现与截图保存在 `codex/strata-theme` 专用分支；主 checkout 保持未提交的初始状态，未配置 remote。后续迭代直接使用任务 worktree，先核实分支和未提交改动。博客文章使用博客仓库的独立分支 `codex/strata-theme-post`，不要在此仓库配置博客 remote。
