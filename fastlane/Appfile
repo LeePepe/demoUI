@@ -1,2 +1,0 @@
-app_identifier(ENV.fetch("DEMOUI_BUNDLE_ID", "com.example.demoui"))
-team_id(ENV.fetch("DEMOUI_TEAM_ID", "ZZZZZZZZZZ"))
