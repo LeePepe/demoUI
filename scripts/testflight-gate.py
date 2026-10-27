@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import re
 import subprocess
 import sys
@@ -120,12 +121,22 @@ def main() -> int:
     try:
         if args.check_contract:
             check_contract()
+            print(json.dumps({"contract": "ok"}))
         paths, missing_tag = changed_paths()
     except (OSError, RuntimeError) as error:
         print(str(error), file=sys.stderr)
         return 1
 
     release = args.force or missing_tag or any(affects_release(path) for path in paths)
+    if args.force:
+        reason = "force"
+    elif missing_tag:
+        reason = "missing-tag"
+    elif any(affects_release(path) for path in paths):
+        reason = "eligible"
+    else:
+        reason = "path-ineligible"
+
     print(f"release={'true' if release else 'false'}")
     if missing_tag:
         print("reason=missing testflight/last-released tag")
@@ -134,6 +145,7 @@ def main() -> int:
     else:
         matching = [path for path in paths if affects_release(path)]
         print("changed=" + (",".join(matching) if matching else "none"))
+    print(json.dumps({"release": release, "reason": reason}))
     if args.dry_run:
         return 0
     return 0
