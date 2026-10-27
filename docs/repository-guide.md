@@ -13,11 +13,12 @@ Markdown links in the snapshot are rebased to immutable provider URLs.
 Run scripts/verify --all before delivery. Git, Bash, Python 3.9+ and Node.js are
 required. The executable entry is shared by .githooks/pre-push and quality CI.
 It always runs contract audit, workflow lint and hook shell syntax; the
-Prototype gates run node --check app.mjs and node --check tokens.mjs.
+Prototype gates run node --check app.mjs and node --check tokens.mjs, and the
+ShowcaseApp gate runs swift test --package-path app.
 Without origin/main or a merge base the normal hook runs all gates, even when
 there is no comparison diff. Governance/support changes also force a full run.
-A wrong/dirty provider cache fails without replacement. No native App exists in
-this bootstrap; no native build or shared package consumption is claimed.
+A wrong/dirty provider cache fails without replacement. The native ShowcaseApp
+build and tests are verified through the Swift package gate.
 Use command-scoped core.hooksPath=.githooks only after inspecting existing hooks;
 never change another checkout's configuration, disable or bypass a hook.
 
@@ -56,10 +57,11 @@ Never commit credentials, local evidence or machine-specific identity paths.
 
 ## Dependencies
 
-There are no current package dependencies. The exact shared-ci provider is
-metadata's single authority; all protocol and reusable workflow links match it.
-The historical Node modules require no package install. Native shared-package
-selection, its exact revision and lockfile are future T08 work.
+The exact shared-ci provider is metadata's single authority; all protocol and
+reusable workflow links match it. The native app pins
+LeePepe/shared-design-system@30112ae881314a525f3ffcb3913a3b02b8d6cbe6 in
+`.github/repo-contract.json`, `app/Package.swift`, and `app/Package.resolved`.
+The historical Node modules require no package install.
 
 ## Delivery
 

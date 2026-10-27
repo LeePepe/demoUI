@@ -46,9 +46,12 @@ final class StrataShowcaseTests: XCTestCase {
         let configuration = try StrataShowcaseConfiguration()
         let snackbar = try configuration.makeSnackbarItem(undo: {})
         XCTAssertEqual(snackbar.action?.label, "Undo")
+        let timedSnackbar = try configuration.makeTimedSnackbarItem()
+        XCTAssertNil(timedSnackbar.action)
         let dialog = try configuration.makeRPEDialogPresentation(onSelect: { _ in .dismiss })
-        XCTAssertEqual(dialog.actions.count, 5)
-        XCTAssertEqual(dialog.actions.first?.label, "RPE 6")
+        XCTAssertEqual(dialog.actions.count, 9)
+        XCTAssertEqual(dialog.actions.first?.label, "RPE 6.0")
+        XCTAssertEqual(dialog.actions.last?.label, "RPE 10.0")
     }
 
     func testTokenResolutionErrorIsUnchanged() {

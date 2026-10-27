@@ -21,9 +21,10 @@ red_lines:
 
 The root map itself is excluded by the resolver. Support entries are explicit
 non-layer material with the checks named above. The verify script is support
-wiring, not a hidden source directory. All present runtime source belongs to
-Prototype. There is no native App layer yet; T08 adds its own ownership and
-one-way public package wiring when authorized.
+wiring, not a hidden source directory. Prototype remains the historical browser
+workbench and design evidence. ShowcaseApp owns `app/**`, provides the native
+SwiftUI Strata showcase, and consumes `LeePepe/shared-design-system` one-way
+through its pinned `Strata` and `DesignTokens` products.
 
 The historical browser layer imports only its local token module. It does not
 consume the Swift package, and its palettes are not production token authority.
