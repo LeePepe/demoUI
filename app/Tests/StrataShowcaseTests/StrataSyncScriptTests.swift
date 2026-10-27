@@ -152,6 +152,11 @@ final class StrataSyncScriptTests: XCTestCase {
         process.executableURL = URL(fileURLWithPath: "/usr/bin/env")
         process.arguments = ["python3", "scripts/sync-strata.py"] + arguments
         process.currentDirectoryURL = root
+        var env = ProcessInfo.processInfo.environment
+        for key in env.keys where key.hasPrefix("GIT_") {
+            env.removeValue(forKey: key)
+        }
+        process.environment = env
         process.standardOutput = output
         process.standardError = output
 

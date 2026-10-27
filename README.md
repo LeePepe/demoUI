@@ -79,5 +79,7 @@ fastlane ios beta
 它只从仓库 secrets / variables 读取签名配置，并在上传成功后更新
 `testflight/last-released` tag。复制 `config/Signing.example.xcconfig` 为被
 忽略的 `config/Signing.local.xcconfig` 可用于本地归档。
+CI Release 归档使用手动 `Apple Distribution` 签名；Fastlane 会安装
+`DemoUI App Store` provisioning profile，runner 在归档前解锁登录钥匙串。
 
 实现与截图保存在 `codex/strata-theme` 专用分支；主 checkout 保持未提交的初始状态，未配置 remote。后续迭代直接使用任务 worktree，先核实分支和未提交改动。博客文章使用博客仓库的独立分支 `codex/strata-theme-post`，不要在此仓库配置博客 remote。

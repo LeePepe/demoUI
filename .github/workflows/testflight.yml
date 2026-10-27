@@ -72,6 +72,31 @@ jobs:
           [ -n "${DEMOUI_BUNDLE_ID:-}" ] || { echo "DEMOUI_BUNDLE_ID is required" >&2; exit 1; }
           [ -n "${DEMOUI_TEAM_ID:-}" ] || { echo "DEMOUI_TEAM_ID is required" >&2; exit 1; }
 
+      - name: Ensure fastlane + xcodegen
+        if: steps.gate.outputs.release == 'true'
+        run: |
+          set -euo pipefail
+          brew list fastlane >/dev/null 2>&1 || brew install fastlane
+          brew list xcodegen >/dev/null 2>&1 || brew install xcodegen
+
+      - name: Unlock login keychain for codesign
+        if: steps.gate.outputs.release == 'true'
+        env:
+          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+        run: |
+          set -euo pipefail
+          KC="$HOME/Library/Keychains/login.keychain-db"
+          if ! security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KC" 2>/tmp/kc-unlock.err; then
+            echo "::error::Failed to unlock login keychain — check KEYCHAIN_PASSWORD secret."
+            cat /tmp/kc-unlock.err >&2 || true
+            exit 1
+          fi
+          security set-keychain-settings "$KC"
+          EXISTING=$(security list-keychains -d user | sed -e 's/^[[:space:]]*"//' -e 's/"$//')
+          security list-keychains -d user -s $(printf '%s\n' "$KC" $EXISTING | awk '!seen[$0]++')
+          security set-key-partition-list -S apple-tool:,apple:,codesign: \
+            -s -k "$KEYCHAIN_PASSWORD" "$KC" >/dev/null 2>&1 || true
+
       - name: Build and upload beta
         if: steps.gate.outputs.release == 'true'
         env:
@@ -81,6 +106,9 @@ jobs:
           KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
           DEMOUI_BUNDLE_ID: ${{ vars.DEMOUI_BUNDLE_ID }}
           DEMOUI_TEAM_ID: ${{ vars.DEMOUI_TEAM_ID }}
+          FASTLANE_SKIP_UPDATE_CHECK: "1"
+          FASTLANE_XCODEBUILD_SETTINGS_TIMEOUT: "120"
+          FASTLANE_XCODEBUILD_SETTINGS_RETRIES: "6"
         run: fastlane ios beta
 
       - name: Mark released revision
