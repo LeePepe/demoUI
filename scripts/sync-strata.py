@@ -25,6 +25,12 @@ RESOLVED_PATTERN = re.compile(
     r'"revision"\s*:\s*")[0-9a-f]{40}(")',
     re.DOTALL,
 )
+PROJECT_PATTERN = re.compile(
+    r'(shared-design-system:\s*\n\s+url:\s+'
+    r'https://github\.com/LeePepe/shared-design-system\.git\s*\n\s+revision:\s*)'
+    r'[0-9a-f]{40}',
+    re.DOTALL,
+)
 GUIDE_PIN_PATTERNS = (
     re.compile(r"(LeePepe/shared-design-system@)[0-9a-f]{40}"),
     re.compile(r"(LeePepe/shared-design-system/tree/)[0-9a-f]{40}"),
@@ -69,6 +75,13 @@ def replace_resolved_revision(text: str, sha: str) -> str:
     return updated
 
 
+def replace_project_revision(text: str, sha: str) -> str:
+    updated, count = PROJECT_PATTERN.subn(rf"\g<1>{sha}", text, count=1)
+    if count != 1:
+        raise SyncError("expected one shared-design-system revision in app/project.yml")
+    return updated
+
+
 def update_guide_revision(text: str, sha: str) -> str:
     marker = "## Complete shared protocol snapshot\n"
     if marker not in text:
@@ -83,16 +96,21 @@ def shared_revisions(root: Path) -> dict[str, str]:
     metadata = read_metadata(root / ".github/repo-contract.json")
     package_text = (root / "app/Package.swift").read_text(encoding="utf-8")
     resolved_text = (root / "app/Package.resolved").read_text(encoding="utf-8")
+    project_text = (root / "app/project.yml").read_text(encoding="utf-8")
     package_match = PACKAGE_PATTERN.search(package_text)
     resolved_match = RESOLVED_PATTERN.search(resolved_text)
+    project_match = PROJECT_PATTERN.search(project_text)
     if package_match is None:
         raise SyncError("expected one shared-design-system revision in app/Package.swift")
     if resolved_match is None:
         raise SyncError("expected one shared-design-system revision in app/Package.resolved")
+    if project_match is None:
+        raise SyncError("expected one shared-design-system revision in app/project.yml")
     revisions = {
         ".github/repo-contract.json": metadata["dependencies"]["shared-design-system"]["version"],
         "app/Package.swift": package_match.group(0).split('"')[-2],
         "app/Package.resolved": resolved_match.group(0).split('"')[-2],
+        "app/project.yml": project_match.group(0)[-40:],
     }
     for path, revision in revisions.items():
         try:
@@ -186,12 +204,14 @@ def sync(root: Path, sha: str, skip_resolve: bool) -> dict[str, str]:
     metadata_path = root / ".github/repo-contract.json"
     package_path = root / "app/Package.swift"
     resolved_path = root / "app/Package.resolved"
+    project_path = root / "app/project.yml"
     guide_path = root / "docs/repository-guide.md"
 
     metadata = read_metadata(metadata_path)
     previous_sha = metadata["dependencies"]["shared-design-system"]["version"]
     package_text = package_path.read_text(encoding="utf-8")
     resolved_text = resolved_path.read_text(encoding="utf-8")
+    project_text = project_path.read_text(encoding="utf-8")
     guide_text = guide_path.read_text(encoding="utf-8") if guide_path.exists() else None
 
     metadata["dependencies"]["shared-design-system"]["version"] = sha
@@ -201,10 +221,12 @@ def sync(root: Path, sha: str, skip_resolve: bool) -> dict[str, str]:
     updated_metadata = (json.dumps(metadata, indent=2) + "\n").encode("utf-8")
     updated_package = replace_package_revision(package_text, sha).encode("utf-8")
     updated_resolved = replace_resolved_revision(resolved_text, sha).encode("utf-8")
+    updated_project = replace_project_revision(project_text, sha).encode("utf-8")
     updates = {
         metadata_path: updated_metadata,
         package_path: updated_package,
         resolved_path: updated_resolved,
+        project_path: updated_project,
     }
     if guide_text is not None:
         updates[guide_path] = update_guide_revision(guide_text, sha).encode("utf-8")

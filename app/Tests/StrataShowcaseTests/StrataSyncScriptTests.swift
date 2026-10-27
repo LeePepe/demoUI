@@ -30,6 +30,10 @@ final class StrataSyncScriptTests: XCTestCase {
             try revision(in: root.appendingPathComponent("app/Package.resolved")),
             replacementSHA
         )
+        XCTAssertTrue(
+            try String(contentsOf: root.appendingPathComponent("app/project.yml"))
+                .contains("revision: \(replacementSHA)")
+        )
 
         let second = try runScript(
             ["--sha", replacementSHA, "--skip-resolve"],
@@ -49,6 +53,13 @@ final class StrataSyncScriptTests: XCTestCase {
             of: "revision: \"\(originalSHA)\"",
             with: "revision: \"\(replacementSHA)\""
         ).write(to: packageURL, atomically: true, encoding: .utf8)
+
+        let projectURL = root.appendingPathComponent("app/project.yml")
+        let project = try String(contentsOf: projectURL)
+        try project.replacingOccurrences(
+            of: "revision: \(originalSHA)",
+            with: "revision: \(replacementSHA)"
+        ).write(to: projectURL, atomically: true, encoding: .utf8)
 
         let result = try runScript(["--check"], in: root)
 
@@ -88,6 +99,16 @@ final class StrataSyncScriptTests: XCTestCase {
         try fileManager.copyItem(
             at: script,
             to: root.appendingPathComponent("scripts/sync-strata.py")
+        )
+        try """
+        packages:
+          shared-design-system:
+            url: https://github.com/LeePepe/shared-design-system.git
+            revision: \(originalSHA)
+        """.write(
+            to: root.appendingPathComponent("app/project.yml"),
+            atomically: true,
+            encoding: .utf8
         )
         try """
         {
