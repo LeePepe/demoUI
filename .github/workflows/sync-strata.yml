@@ -1,0 +1,109 @@
+name: sync-strata
+
+on:
+  repository_dispatch:
+    types: [strata-main-updated]
+  workflow_dispatch:
+    inputs:
+      strata_sha:
+        description: Optional shared-design-system main SHA
+        required: false
+        type: string
+  schedule:
+    - cron: "17 */6 * * *"
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: sync-strata
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: macos-15
+    steps:
+      - name: Check out main
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Resolve target revision
+        id: target
+        env:
+          DISPATCH_SHA: ${{ github.event.inputs.strata_sha || github.event.client_payload.sha || '' }}
+        run: |
+          set -euo pipefail
+          TARGET_SHA="${DISPATCH_SHA}"
+          if [ -z "$TARGET_SHA" ]; then
+            TARGET_SHA="$(git ls-remote https://github.com/LeePepe/shared-design-system.git refs/heads/main | awk '{print $1}')"
+          fi
+          printf 'sha=%s\n' "$TARGET_SHA" >> "$GITHUB_OUTPUT"
+
+      - name: Synchronize pin
+        id: sync
+        env:
+          TARGET_SHA: ${{ steps.target.outputs.sha }}
+        run: |
+          set -euo pipefail
+          SUMMARY="$(python3 scripts/sync-strata.py --sha "$TARGET_SHA")"
+          printf '%s\n' "$SUMMARY"
+          STATUS="$(python3 -c 'import json, sys; print(json.load(sys.stdin)["status"])' <<<"$SUMMARY")"
+          printf 'status=%s\n' "$STATUS" >> "$GITHUB_OUTPUT"
+
+      - name: Verify synchronized tree
+        if: steps.sync.outputs.status == 'updated'
+        run: scripts/verify --all
+
+      - name: Commit and open pull request
+        if: steps.sync.outputs.status == 'updated'
+        env:
+          TARGET_SHA: ${{ steps.target.outputs.sha }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          BRANCH="chore/sync-strata-${TARGET_SHA:0:12}"
+          git switch -C "$BRANCH"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .github/repo-contract.json app/Package.swift app/Package.resolved docs/repository-guide.md
+          git commit -m "chore(deps): sync shared-design-system to ${TARGET_SHA:0:12}" \
+            -m "Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>"
+          git fetch origin "$BRANCH:refs/remotes/origin/$BRANCH" 2>/dev/null || true
+          git push --force-with-lease origin "$BRANCH"
+          HEAD_SHA="$(git rev-parse HEAD)"
+          cat > "$RUNNER_TEMP/sync-strata-pr.md" <<EOF
+          ## Existing behaviour
+
+          demoUI consumed a manually pinned shared-design-system revision in its Swift package, metadata, lockfile, and repository guide.
+
+          ## Intent
+
+          After this PR, demoUI tracks the shared-design-system revision selected by the sync workflow. This is a Dependency / pin change for T09-strata-autosync; the script also supports local live-link override and reset commands.
+
+          ## Compatibility
+
+          The Swift package continues to use the same remote dependency and exact-revision model. Rollback is a normal revert of this dependency-only PR.
+
+          ## Removed or weakened tests or policy
+
+          none
+
+          ## Test evidence
+
+          - Command: scripts/verify --all
+          - Result: passed before commit
+          - Tested SHA: ${HEAD_SHA}
+          EOF
+          PR_NUMBER="$(gh pr list --head "$BRANCH" --base main --state open --json number --jq '.[0].number')"
+          if [ -z "$PR_NUMBER" ]; then
+            PR_URL="$(gh pr create --base main --head "$BRANCH" \
+              --title "chore(deps): sync shared-design-system to ${TARGET_SHA:0:12}" \
+              --body-file "$RUNNER_TEMP/sync-strata-pr.md")"
+            PR_NUMBER="$(gh pr view "$PR_URL" --json number --jq '.number')"
+          else
+            gh pr edit "$PR_NUMBER" --body-file "$RUNNER_TEMP/sync-strata-pr.md"
+          fi
+          gh pr merge "$PR_NUMBER" --auto --squash --match-head-commit "$HEAD_SHA"
