@@ -63,6 +63,19 @@ the review-relevant PR kinds above. Update both in the same change when these
 choices change. Review callers read that complete guide from trusted base;
 a PR-head-only guide cannot establish trusted review.
 
+## Shared design-system sync
+
+`scripts/sync-strata.py` keeps the shared-design-system metadata, Swift package
+manifest, lockfile, and guide reference aligned. The GitHub Actions workflow
+opens a dependency/pin PR after `scripts/verify --all`; local work can use a
+live checkout without changing the committed pin:
+
+```sh
+python3 scripts/sync-strata.py --local-override ../shared-design-system
+python3 scripts/sync-strata.py --reset-override
+python3 scripts/sync-strata.py --check
+```
+
 ## Delivery
 
 Use the repository PR template with the exact tested head. Keep evidence outside

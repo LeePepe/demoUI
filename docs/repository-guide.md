@@ -71,6 +71,24 @@ old command, CI and review evidence. PRM uses existing outcomes without a separa
 size/scope report. Owner alone approves this bootstrap's protected paths.
 Independent V1–V3 acceptance is assigned separately; writer checks are self-checks.
 
+### Automated Strata synchronization
+
+The `sync-strata` workflow listens for `shared-design-system` updates, periodic
+catch-up checks, and manual dispatches. It opens a dependency/pin PR after
+running `scripts/verify --all`; it does not change the pinned shared-ci
+provider or the embedded protocol snapshot.
+
+For local development, link an adjacent checkout and restore the pinned
+revision with:
+
+```sh
+python3 scripts/sync-strata.py --local-override ../shared-design-system
+python3 scripts/sync-strata.py --reset-override
+```
+
+Use `python3 scripts/sync-strata.py --check` to verify that metadata, the Swift
+manifest, and the lockfile agree.
+
 ### Review-relevant development extract
 
 One goal per PR: start Intent with `After this PR, <observable outcome>`.
