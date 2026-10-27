@@ -57,4 +57,15 @@ swift run --package-path app StrataShowcaseApp --export-screenshots /tmp/strata-
 
 `app/Package.swift` 固定消费 `shared-design-system` 的 exact revision，并通过 `Strata` 与 `DesignTokens` 提供五品牌、双外观、Solid/Glass 和四数据状态的组件目录。
 
+共享设计系统同步与本地 live-link：
+
+```sh
+python3 scripts/sync-strata.py --check
+python3 scripts/sync-strata.py --local-override ../shared-design-system
+python3 scripts/sync-strata.py --reset-override
+```
+
+`sync-strata` workflow 会在 shared-design-system 更新或定时追赶时运行
+`scripts/verify --all`，并为新的 exact revision 打开依赖 / pin PR。
+
 实现与截图保存在 `codex/strata-theme` 专用分支；主 checkout 保持未提交的初始状态，未配置 remote。后续迭代直接使用任务 worktree，先核实分支和未提交改动。博客文章使用博客仓库的独立分支 `codex/strata-theme-post`，不要在此仓库配置博客 remote。
