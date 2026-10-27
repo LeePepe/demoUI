@@ -2,10 +2,12 @@
 
 ## Architecture
 
-[The root layer map](architecture/tech-context.md) and its Prototype leaf own
-paths, interfaces and dependency direction. The current runtime is a historical
-static browser prototype. The native App, public Swift package wiring and native
-build/showcase verification belong to T08 after T07 is fully delivered.
+[The root layer map](architecture/tech-context.md) and its layer leaves own
+paths, interfaces and dependency direction. The runtime includes the historical
+static browser prototype and the native `ShowcaseApp` SwiftUI showcase.
+`ShowcaseApp` consumes the pinned `LeePepe/shared-design-system` package and its
+native build/showcase verification runs through `swift test --package-path app`
+via `scripts/verify`.
 
 ## PR kinds
 
@@ -52,7 +54,7 @@ existing hook. The bootstrap has no installed hooks by copying files alone.
 | Prototype JavaScript syntax | Enforced locally by Prototype gates through the same entry |
 | Hook shell syntax | Enforced locally by bash -n in scripts/verify; actual hook evidence recorded externally |
 | Prototype runtime/import direction and historical source preservation | Manual content/diff review; Node syntax is not an import-boundary test |
-| Native App build, showcase and shared package consumption | Planned in T08; absent in T07 |
+| Native App build, showcase and shared package consumption | `ShowcaseApp` (`app/**`) is verified by `swift test --package-path app` via `scripts/verify`; the package pin is `LeePepe/shared-design-system@30112ae881314a525f3ffcb3913a3b02b8d6cbe6` |
 | Required checks, Owner review, App/Actions access and repository-scoped runner | Planned until exact remote capability/readback and current-head evidence exist |
 | PR intent, kind and necessary companions | Manual independent content review, using this guide |
 

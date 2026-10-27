@@ -66,7 +66,10 @@ struct StrataShowcaseApp: App {
                 ))
             ]
             for (name, configuration) in screenshots {
-                let content = StrataShowcaseRootView(configuration: configuration)
+                let content = StrataShowcaseRootView(
+                    configuration: configuration,
+                    rendersWithoutScrollView: true
+                )
                     .frame(width: 1200, height: 860)
                 let renderer = ImageRenderer(content: content)
                 renderer.scale = 2

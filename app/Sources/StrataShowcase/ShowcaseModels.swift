@@ -98,13 +98,21 @@ public struct StrataShowcaseConfiguration {
     }
 
     @MainActor
+    public func makeTimedSnackbarItem() throws -> StrataSnackbarItem {
+        try StrataSnackbarItem(
+            message: "This snackbar dismisses in 5 seconds",
+            closeLabel: "Dismiss"
+        )
+    }
+
+    @MainActor
     public func makeRPEDialogPresentation(
         onSelect: @escaping @Sendable @MainActor (Double) -> StrataDialogActionOutcome
     ) throws -> StrataDialogPresentation {
-        let actions = try stride(from: 6.0, through: 10.0, by: 1.0).map { rpe in
+        let actions = try stride(from: 6.0, through: 10.0, by: 0.5).map { rpe in
             try StrataDialogAction(
-                id: "rpe-\(Int(rpe))",
-                label: "RPE \(Int(rpe))",
+                id: "rpe-\(Int(rpe * 10))",
+                label: "RPE \(rpe.formatted(.number.precision(.fractionLength(1))))",
                 role: .secondary,
                 perform: { onSelect(rpe) }
             )

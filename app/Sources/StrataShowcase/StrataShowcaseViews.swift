@@ -2,6 +2,12 @@ import DesignTokens
 import Strata
 import SwiftUI
 
+private struct ShowcaseListEntry: Identifiable {
+    let id: String
+    let title: String
+    let detail: String
+}
+
 public struct StrataShowcaseRootView: View {
     @State private var configuration: StrataShowcaseConfiguration
     @State private var interaction = StrataShowcaseInteractionState()
@@ -15,9 +21,14 @@ public struct StrataShowcaseRootView: View {
     @State private var snackbarItem: StrataSnackbarItem?
     @State private var dialogPresentation: StrataDialogPresentation?
     @State private var configurationError: String?
+    public let rendersWithoutScrollView: Bool
 
-    public init(configuration: StrataShowcaseConfiguration) {
+    public init(
+        configuration: StrataShowcaseConfiguration,
+        rendersWithoutScrollView: Bool = false
+    ) {
         _configuration = State(initialValue: configuration)
+        self.rendersWithoutScrollView = rendersWithoutScrollView
     }
 
     public var body: some View {
@@ -28,26 +39,37 @@ public struct StrataShowcaseRootView: View {
 
     @ViewBuilder
     private var showcaseHost: some View {
-        VStack(spacing: 0) {
-            globalControls
-            ScrollView {
-                sectionContent
-                    .padding(24)
-                    .frame(maxWidth: 1400)
-                    .frame(maxWidth: .infinity)
+        configuredFeedbackHost(content:
+            VStack(spacing: 0) {
+                globalControls
+                if rendersWithoutScrollView {
+                    VStack(alignment: .leading, spacing: 16) {
+                        sectionContent
+                            .padding(24)
+                            .frame(maxWidth: 1400)
+                            .frame(maxWidth: .infinity)
+                    }
+                } else {
+                    ScrollView {
+                        sectionContent
+                            .padding(24)
+                            .frame(maxWidth: 1400)
+                            .frame(maxWidth: .infinity)
+                    }
+                }
             }
-        }
-        .foregroundStyle(configuration.theme.foreground)
-        .overlay(alignment: .bottom) {
-            if let configurationError {
-                Text(configurationError)
-                    .font(.footnote)
-                    .foregroundStyle(configuration.theme.onCritical)
-                    .padding(12)
-                    .background(configuration.theme.critical, in: Capsule())
-                    .padding()
+            .foregroundStyle(configuration.theme.foreground)
+            .overlay(alignment: .bottom) {
+                if let configurationError {
+                    Text(configurationError)
+                        .font(.footnote)
+                        .foregroundStyle(configuration.theme.onCritical)
+                        .padding(12)
+                        .background(configuration.theme.critical, in: Capsule())
+                        .padding()
+                }
             }
-        }
+        )
     }
 
     private var globalControls: some View {
@@ -61,15 +83,19 @@ public struct StrataShowcaseRootView: View {
                         .foregroundStyle(configuration.theme.secondaryForeground)
                 }
                 Spacer()
-                Picker("Brand", selection: Binding(
-                    get: { configuration.brand },
-                    set: { updateConfiguration(brand: $0) }
-                )) {
-                    ForEach(ShowcaseBrand.allCases) { brand in
-                        Text(brand.title).tag(brand)
-                    }
-                }
-                .pickerStyle(.menu)
+                resolvedSegmentedBar(
+                    items: ShowcaseBrand.allCases.map {
+                        StrataSegmentedItem(id: $0.rawValue, title: $0.title)
+                    },
+                    selection: Binding(
+                        get: { configuration.brand.rawValue },
+                        set: { rawValue in
+                            if let brand = ShowcaseBrand(rawValue: rawValue) {
+                                updateConfiguration(brand: brand)
+                            }
+                        }
+                    )
+                )
             }
 
             resolvedSegmentedBar(
@@ -161,7 +187,7 @@ public struct StrataShowcaseRootView: View {
                     patternGallery
                 }
             } else {
-                statesSection
+                activeDataStateView
             }
         }
     }
@@ -237,7 +263,7 @@ public struct StrataShowcaseRootView: View {
                             variant: .primary,
                             surface: configuration.surfaceStyle,
                             isLoading: configuration.dataState == .loading,
-                            action: { interaction.presentRPEDialog() },
+                            action: { presentRPEDialog() },
                             label: { Text("Open RPE dialog") },
                             loadingLabel: { Text("Opening") }
                         )
@@ -284,12 +310,34 @@ public struct StrataShowcaseRootView: View {
                         }
                     }
                 }
+                StrataCard(theme: configuration.theme, surface: configuration.surfaceStyle) {
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("List, progress, and avatar")
+                        resolvedList
+                        resolvedProgressBar
+                        StrataAvatar(
+                            theme: configuration.theme,
+                            size: .large,
+                            accessibilityLabel: Text("Strata showcase avatar")
+                        ) {
+                            Text("S")
+                        }
+                    }
+                }
             }
         }
     }
 
+    @ViewBuilder
     private var workoutSection: some View {
-        workoutHost
+        if configuration.dataState == .populated {
+            workoutContent
+        } else {
+            VStack(alignment: .leading, spacing: 16) {
+                sectionHeading("Active Workout", subtitle: "Set completion, RPE, undo, and finish confirmation.")
+                activeDataStateView
+            }
+        }
     }
 
     private var workoutContent: some View {
@@ -343,7 +391,7 @@ public struct StrataShowcaseRootView: View {
                     variant: .secondary,
                     surface: configuration.surfaceStyle,
                     isLoading: false,
-                    action: { interaction.presentRPEDialog() },
+                    action: { presentRPEDialog() },
                     label: { Text("Rate RPE") },
                     loadingLabel: { Text("Opening") }
                 )
@@ -360,7 +408,19 @@ public struct StrataShowcaseRootView: View {
         }
     }
 
+    @ViewBuilder
     private var pickerSection: some View {
+        if configuration.dataState == .populated {
+            pickerContent
+        } else {
+            VStack(alignment: .leading, spacing: 16) {
+                sectionHeading("Exercise Picker", subtitle: "Muscle rail, searchable exercise cards, index rail, and docked actions.")
+                activeDataStateView
+            }
+        }
+    }
+
+    private var pickerContent: some View {
         VStack(alignment: .leading, spacing: 16) {
             sectionHeading("Exercise Picker", subtitle: "Muscle rail, searchable exercise cards, index rail, and docked actions.")
             HStack(alignment: .top, spacing: 16) {
@@ -374,6 +434,7 @@ public struct StrataShowcaseRootView: View {
                     ),
                     axis: .vertical
                 )
+                .frame(width: 76, alignment: .top)
                 VStack(alignment: .leading, spacing: 12) {
                     Text("\(interaction.selectedMuscle) exercises")
                         .font(.headline)
@@ -432,19 +493,22 @@ public struct StrataShowcaseRootView: View {
                         variant: .secondary,
                         surface: configuration.surfaceStyle,
                         isLoading: false,
-                        action: { interaction.isSnackbarPresented = true },
-                        label: { Text("Show snackbar") },
+                        action: { presentTimedSnackbar() },
+                        label: { Text("5s timer snackbar") },
+                        loadingLabel: { Text("Showing") }
+                    )
+                    StrataButton(
+                        theme: configuration.theme,
+                        variant: .secondary,
+                        surface: configuration.surfaceStyle,
+                        isLoading: false,
+                        action: { presentUndoSnackbar() },
+                        label: { Text("Undo snackbar") },
                         loadingLabel: { Text("Showing") }
                     )
                 }
             }
         }
-    }
-
-    private var workoutHost: some View {
-        AnyView(
-            configuredFeedbackHost(content: workoutContent)
-        )
     }
 
     private func configuredFeedbackHost<Content: View>(content: Content) -> some View {
@@ -535,7 +599,7 @@ public struct StrataShowcaseRootView: View {
             return AnyView(StrataNumberSlot(
                 theme: configuration.theme,
                 configuration: numberSlot,
-                action: { interaction.toggleSetCompletion(id) }
+                action: { toggleSetCompletion(id) }
             ))
         } catch {
             return AnyView(failureView(error))
@@ -613,11 +677,70 @@ public struct StrataShowcaseRootView: View {
         )
     }
 
+    private var resolvedList: some View {
+        let entries = [
+            ShowcaseListEntry(id: "bench", title: "Bench press", detail: "Chest · 3 sets"),
+            ShowcaseListEntry(id: "row", title: "Cable row", detail: "Back · 3 sets")
+        ]
+        return StrataList(
+            theme: configuration.theme,
+            surface: configuration.surfaceStyle,
+            items: entries,
+            id: \.id,
+            selection: .single($selectedExercise),
+            header: { Text("Recent exercises") },
+            leading: { _ in
+                Image(systemName: "figure.strengthtraining.traditional")
+            },
+            primary: { entry in
+                Text(entry.title)
+            },
+            secondary: { entry in
+                Text(entry.detail)
+            },
+            trailing: { _ in
+                Image(systemName: "chevron.right")
+            },
+            footer: { Text("Select an exercise to continue.") }
+        )
+    }
+
+    @ViewBuilder
+    private var activeDataStateView: some View {
+        switch configuration.dataState {
+        case .populated:
+            EmptyView()
+        case .empty:
+            resolvedStateView(
+                kind: .empty,
+                title: "Nothing here",
+                message: "Create a workout to populate this view.",
+                actionTitle: "Restore populated",
+                action: { updateConfiguration(dataState: .populated) }
+            )
+        case .loading:
+            resolvedStateView(
+                kind: .loading,
+                title: "Loading workout",
+                message: "Resolving the latest session."
+            )
+        case .error:
+            resolvedStateView(
+                kind: .error,
+                title: "Could not load",
+                message: "Try again when the connection is restored.",
+                actionTitle: "Restore populated",
+                action: { updateConfiguration(dataState: .populated) }
+            )
+        }
+    }
+
     private func resolvedStateView(
         kind: StrataStateView.Kind,
         title: String,
         message: String,
-        actionTitle: String? = nil
+        actionTitle: String? = nil,
+        action: (() -> Void)? = nil
     ) -> some View {
         do {
             return AnyView(try StrataStateView(
@@ -626,7 +749,7 @@ public struct StrataShowcaseRootView: View {
                 title: title,
                 message: message,
                 actionTitle: actionTitle,
-                action: { selectedExercise = "Created" }
+                action: action ?? { selectedExercise = "Created" }
             ))
         } catch {
             return AnyView(failureView(error))
@@ -683,6 +806,49 @@ public struct StrataShowcaseRootView: View {
                 section: section
             )
             configurationError = nil
+        } catch {
+            configurationError = String(describing: error)
+        }
+    }
+
+    private func toggleSetCompletion(_ id: String) {
+        let wasCompleted = interaction.completedSetIDs.contains(id)
+        interaction.toggleSetCompletion(id)
+        if !wasCompleted {
+            presentUndoSnackbar(for: id)
+        }
+    }
+
+    private func presentUndoSnackbar(for id: String? = nil) {
+        do {
+            snackbarItem = try configuration.makeSnackbarItem {
+                if let id {
+                    interaction.completedSetIDs.remove(id)
+                }
+                interaction.isSnackbarPresented = false
+            }
+            interaction.isSnackbarPresented = true
+        } catch {
+            configurationError = String(describing: error)
+        }
+    }
+
+    private func presentTimedSnackbar() {
+        do {
+            snackbarItem = try configuration.makeTimedSnackbarItem()
+            interaction.isSnackbarPresented = true
+        } catch {
+            configurationError = String(describing: error)
+        }
+    }
+
+    private func presentRPEDialog() {
+        do {
+            dialogPresentation = try configuration.makeRPEDialogPresentation { value in
+                sliderValue = value
+                return .dismiss
+            }
+            interaction.isDialogPresented = true
         } catch {
             configurationError = String(describing: error)
         }
