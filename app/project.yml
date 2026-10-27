@@ -1,0 +1,38 @@
+name: DemoUI
+options:
+  deploymentTarget:
+    iOS: "17.0"
+    macOS: "14.0"
+packages:
+  shared-design-system:
+    url: https://github.com/LeePepe/shared-design-system.git
+    revision: 30112ae881314a525f3ffcb3913a3b02b8d6cbe6
+targets:
+  DemoUI:
+    type: application
+    platform: iOS
+    sources:
+      - Sources/StrataShowcase
+      - Sources/StrataShowcaseApp
+    settings:
+      PRODUCT_BUNDLE_IDENTIFIER: LeePepe.DemoUI
+      SWIFT_VERSION: "6.0"
+    dependencies:
+      - package: shared-design-system
+        product: Strata
+      - package: shared-design-system
+        product: DesignTokens
+  DemoUIMac:
+    type: application
+    platform: macOS
+    sources:
+      - Sources/StrataShowcase
+      - Sources/StrataShowcaseApp
+    settings:
+      PRODUCT_BUNDLE_IDENTIFIER: LeePepe.DemoUI.mac
+      SWIFT_VERSION: "6.0"
+    dependencies:
+      - package: shared-design-system
+        product: Strata
+      - package: shared-design-system
+        product: DesignTokens

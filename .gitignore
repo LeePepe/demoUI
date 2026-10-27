@@ -2,3 +2,7 @@
 node_modules/
 .local/
 .shared-ci/
+app/.build/
+app/.swiftpm/
+app/*.xcodeproj/
+*.DS_Store

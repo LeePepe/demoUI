@@ -2,5 +2,10 @@
   "schema": 1,
   "guide": "docs/repository-guide.md",
   "shared_ci": "fd8a187ef4872aa1aa69c4e9afec9782183cc02d",
-  "dependencies": {}
+  "dependencies": {
+    "shared-design-system": {
+      "version": "30112ae881314a525f3ffcb3913a3b02b8d6cbe6",
+      "ai": "https://github.com/LeePepe/shared-design-system/tree/30112ae881314a525f3ffcb3913a3b02b8d6cbe6/ai/"
+    }
+  }
 }
