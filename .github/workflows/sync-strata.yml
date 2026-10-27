@@ -71,8 +71,9 @@ jobs:
           git add .github/repo-contract.json app/Package.swift app/Package.resolved docs/repository-guide.md
           git commit -m "chore(deps): sync shared-design-system to ${TARGET_SHA:0:12}" \
             -m "Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>"
+          git fetch origin "$BRANCH:refs/remotes/origin/$BRANCH" 2>/dev/null || true
           git push --force-with-lease origin "$BRANCH"
-          TESTED_SHA="$(git rev-parse HEAD)"
+          HEAD_SHA="$(git rev-parse HEAD)"
           cat > "$RUNNER_TEMP/sync-strata-pr.md" <<EOF
           ## Existing behaviour
 
@@ -94,13 +95,15 @@ jobs:
 
           - Command: scripts/verify --all
           - Result: passed before commit
-          - Tested SHA: ${TESTED_SHA}
+          - Tested SHA: ${HEAD_SHA}
           EOF
-          PR_URL="$(gh pr list --head "$BRANCH" --base main --state open --json url --jq '.[0].url')"
-          if [ -z "$PR_URL" ]; then
-            gh pr create --base main --head "$BRANCH" \
+          PR_NUMBER="$(gh pr list --head "$BRANCH" --base main --state open --json number --jq '.[0].number')"
+          if [ -z "$PR_NUMBER" ]; then
+            PR_URL="$(gh pr create --base main --head "$BRANCH" \
               --title "chore(deps): sync shared-design-system to ${TARGET_SHA:0:12}" \
-              --body-file "$RUNNER_TEMP/sync-strata-pr.md"
+              --body-file "$RUNNER_TEMP/sync-strata-pr.md")"
+            PR_NUMBER="$(gh pr view "$PR_URL" --json number --jq '.number')"
           else
-            gh pr edit "$PR_URL" --body-file "$RUNNER_TEMP/sync-strata-pr.md"
+            gh pr edit "$PR_NUMBER" --body-file "$RUNNER_TEMP/sync-strata-pr.md"
           fi
+          gh pr merge "$PR_NUMBER" --auto --squash --match-head-commit "$HEAD_SHA"
