@@ -76,6 +76,8 @@ final class StrataTestFlightGateTests: XCTestCase {
         XCTAssertTrue(fastlane.contains("get_provisioning_profile"))
         XCTAssertTrue(fastlane.contains("latest_testflight_build_number"))
         XCTAssertTrue(fastlane.contains("signingStyle: \"manual\""))
+        XCTAssertTrue(fastlane.contains("skip_waiting_for_build_processing: false"))
+        XCTAssertTrue(fastlane.contains("add_beta_groups"))
 
         let contract = try runScript(
             ["--check-contract", "--dry-run"],
