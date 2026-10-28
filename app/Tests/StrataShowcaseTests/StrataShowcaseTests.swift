@@ -66,4 +66,53 @@ final class StrataShowcaseTests: XCTestCase {
             XCTAssertEqual(configuration.theme.mode, .light)
         }
     }
+
+    @MainActor
+    func testLayeredShowcaseSupportsMobileAndDesktopRenderWidths() throws {
+        let mobile = StrataShowcaseRootView(
+            configuration: try StrataShowcaseConfiguration(section: .overview),
+            rendersWithoutScrollView: true,
+            renderWidth: 393
+        )
+        let desktop = StrataShowcaseRootView(
+            configuration: try StrataShowcaseConfiguration(
+                brand: .purple,
+                appearance: .dark,
+                surfaceStyle: .glass,
+                section: .picker
+            ),
+            rendersWithoutScrollView: true,
+            initialInspectorExpanded: true,
+            renderWidth: 1200
+        )
+
+        XCTAssertEqual(mobile.renderWidth, 393)
+        XCTAssertTrue(mobile.rendersWithoutScrollView)
+        XCTAssertEqual(desktop.renderWidth, 1200)
+        XCTAssertTrue(desktop.rendersWithoutScrollView)
+    }
+
+    func testLayerNavigationPreservesAllShowcaseSections() {
+        XCTAssertEqual(
+            ShowcaseSection.allCases.map(\.rawValue),
+            ["overview", "workout", "picker", "controls", "states"]
+        )
+        XCTAssertEqual(ShowcaseSection.allCases.map(\.title), [
+            "Overview", "Workout", "Picker", "Controls", "States"
+        ])
+    }
+
+    func testLayeredTokenAndWorkoutValuesResolve() throws {
+        XCTAssertNoThrow(try StrataTokenColor.resolve("status.strata.warning", theme: .light))
+
+        let numberSlot = try StrataNumberSlotConfiguration(
+            label: "Set 1",
+            displayValue: "8",
+            prefixBadge: "80 kg",
+            unitLabel: "reps"
+        )
+        XCTAssertEqual(numberSlot.prefixBadge, "80 kg")
+        XCTAssertEqual(numberSlot.displayValue, "8")
+        XCTAssertEqual(numberSlot.unitLabel, "reps")
+    }
 }

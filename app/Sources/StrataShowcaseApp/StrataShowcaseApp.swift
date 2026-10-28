@@ -59,10 +59,10 @@ struct StrataShowcaseApp: App {
             let screenshots: [(String, StrataShowcaseConfiguration, CGSize, Bool)] = [
                 ("mobile-overview-blue-light", try StrataShowcaseConfiguration(
                     brand: .blue, appearance: .light, surfaceStyle: .solid, section: .overview
-                ), CGSize(width: 393, height: 1400), false),
+                ), CGSize(width: 393, height: 2400), false),
                 ("mobile-overview-purple-dark", try StrataShowcaseConfiguration(
                     brand: .purple, appearance: .dark, surfaceStyle: .glass, section: .overview
-                ), CGSize(width: 393, height: 852), true),
+                ), CGSize(width: 393, height: 2400), true),
                 ("mobile-workout-blue-light", try StrataShowcaseConfiguration(
                     brand: .blue, appearance: .light, surfaceStyle: .glass, section: .workout
                 ), CGSize(width: 393, height: 852), false),

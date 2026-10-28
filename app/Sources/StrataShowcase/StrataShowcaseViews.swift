@@ -8,6 +8,12 @@ private struct ShowcaseListEntry: Identifiable {
     let detail: String
 }
 
+private struct ShowcaseLayerTab: Identifiable {
+    let id: String
+    let title: String
+    let section: ShowcaseSection
+}
+
 public struct StrataShowcaseRootView: View {
     @State private var configuration: StrataShowcaseConfiguration
     @State private var interaction = StrataShowcaseInteractionState()
@@ -91,11 +97,6 @@ public struct StrataShowcaseRootView: View {
                     Text("Strata")
                         .font(.title2.weight(.bold))
                         .lineLimit(1)
-                    Text(configurationSummary)
-                        .font(.caption.weight(.medium))
-                        .foregroundStyle(configuration.theme.secondaryForeground)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.8)
                 }
                 .frame(minWidth: 86, alignment: .leading)
                 .layoutPriority(1)
@@ -124,6 +125,13 @@ public struct StrataShowcaseRootView: View {
                 .background(configuration.theme.surface(.inset), in: Capsule())
                 .accessibilityValue(isInspectorExpanded ? "Expanded" : "Collapsed")
             }
+
+            Text(configurationSummary)
+                .font(.caption.weight(.medium))
+                .foregroundStyle(configuration.theme.secondaryForeground)
+                .lineLimit(1)
+                .fixedSize(horizontal: false, vertical: true)
+                .frame(maxWidth: .infinity, alignment: .leading)
 
             if isInspectorExpanded {
                 inspector
@@ -252,7 +260,11 @@ public struct StrataShowcaseRootView: View {
     @ViewBuilder
     private var layerTabBar: some View {
         Group {
-            if rendersWithoutScrollView {
+            if rendersWithoutScrollView, (renderWidth ?? .infinity) <= 600 {
+                compactLayerTabItems
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 100)
+            } else if rendersWithoutScrollView {
                 layerTabItems
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .frame(height: 54)
@@ -269,45 +281,71 @@ public struct StrataShowcaseRootView: View {
         .background(configuration.theme.canvas)
     }
 
-    private var layerTabItems: some View {
-        HStack(spacing: 8) {
-            ForEach(ShowcaseSection.allCases) { section in
-                Button {
-                    updateConfiguration(section: section)
-                } label: {
-                    Text(layerTabTitle(section))
-                        .font(.callout.weight(.semibold))
-                        .lineLimit(1)
-                        .fixedSize(horizontal: true, vertical: false)
-                        .padding(.horizontal, 14)
-                        .frame(minHeight: 38)
-                }
-                .buttonStyle(.plain)
-                .foregroundStyle(
-                    configuration.section == section
-                        ? configuration.theme.onAccent
-                        : configuration.theme.foreground
-                )
-                .background(
-                    configuration.section == section
-                        ? configuration.theme.accent
-                        : configuration.theme.surface(.card),
-                    in: Capsule()
-                )
-                .accessibilityAddTraits(configuration.section == section ? .isSelected : [])
+    private var compactLayerTabItems: some View {
+        LazyVGrid(
+            columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 3),
+            spacing: 8
+        ) {
+            ForEach([
+                ShowcaseLayerTab(id: "all-layers", title: "All Layers", section: .overview),
+                ShowcaseLayerTab(id: "tokens", title: "L1 · Tokens", section: .overview),
+                ShowcaseLayerTab(id: "controls", title: "L2 · Controls", section: .controls),
+                ShowcaseLayerTab(id: "feedback", title: "L3 · Feedback", section: .states),
+                ShowcaseLayerTab(id: "workout", title: "L4 · Workout", section: .workout),
+                ShowcaseLayerTab(id: "picker", title: "L4 · Picker", section: .picker)
+            ]) { tab in
+                layerTabButton(title: tab.title, section: tab.section)
             }
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 8)
     }
 
+    private var layerTabItems: some View {
+        HStack(spacing: 8) {
+            ForEach(ShowcaseSection.allCases) { section in
+                layerTabButton(title: layerTabTitle(section), section: section)
+            }
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 8)
+    }
+
+    private func layerTabButton(title: String, section: ShowcaseSection) -> some View {
+        Button {
+            updateConfiguration(section: section)
+        } label: {
+            Text(title)
+                .font(.callout.weight(.semibold))
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
+                .fixedSize(horizontal: !((renderWidth ?? .infinity) <= 600), vertical: false)
+                .frame(maxWidth: .infinity)
+                .padding(.horizontal, 8)
+                .frame(minHeight: 38)
+        }
+        .buttonStyle(.plain)
+        .foregroundStyle(
+            configuration.section == section
+                ? configuration.theme.onAccent
+                : configuration.theme.foreground
+        )
+        .background(
+            configuration.section == section
+                ? configuration.theme.accent
+                : configuration.theme.surface(.card),
+            in: Capsule()
+        )
+        .accessibilityAddTraits(configuration.section == section ? .isSelected : [])
+    }
+
     private func layerTabTitle(_ section: ShowcaseSection) -> String {
         switch section {
-        case .overview: "Overview · All Layers"
-        case .workout: "Workout · L4"
-        case .picker: "Picker · L4"
-        case .controls: "Controls · L2"
-        case .states: "States · L3"
+        case .overview: "All Layers"
+        case .workout: "L4 · Workout"
+        case .picker: "L4 · Picker"
+        case .controls: "L2 · Controls"
+        case .states: "L3 · Feedback"
         }
     }
 
@@ -397,40 +435,45 @@ public struct StrataShowcaseRootView: View {
     }
 
     private var tokenSwatches: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Semantic token map")
-                .font(.headline)
-            if let renderWidth {
-                ZStack(alignment: .leading) {
-                    tokenSwatchItems
+        do {
+            let warning = try StrataTokenColor.resolve(
+                "status.strata.warning",
+                theme: configuration.appearance
+            )
+            return AnyView(
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Semantic token map")
+                        .font(.headline)
+                    tokenSwatchItems(warningColor: warning)
                 }
-                .frame(width: max(renderWidth - 32, 0), height: 62)
-            } else {
-                ScrollView(.horizontal, showsIndicators: false) {
-                    tokenSwatchItems
-                }
-                .frame(height: 62)
-            }
+            )
+        } catch {
+            return AnyView(failureView(error))
         }
     }
 
-    private var tokenSwatchItems: some View {
-        HStack(spacing: 8) {
+    private func tokenSwatchItems(warningColor: Color) -> some View {
+        LazyVGrid(
+            columns: [GridItem(.adaptive(minimum: 76), spacing: 8)],
+            spacing: 8
+        ) {
             tokenSwatch("Canvas", color: configuration.theme.canvas)
             tokenSwatch("Surface", color: configuration.theme.surface)
             tokenSwatch("Elevated", color: configuration.theme.surface(.card))
             tokenSwatch("Accent", color: configuration.theme.accent)
             tokenSwatch("Success", color: configuration.theme.success)
-            tokenSwatch("Warning", color: configuration.theme.accentHover)
+            tokenSwatch("Warning", color: warningColor)
             tokenSwatch("Critical", color: configuration.theme.critical)
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private func tokenSwatch(_ title: String, color: Color) -> some View {
         VStack(alignment: .leading, spacing: 5) {
             RoundedRectangle(cornerRadius: 10, style: .continuous)
                 .fill(color)
-                .frame(width: 72, height: 34)
+                .frame(maxWidth: .infinity)
+                .frame(height: 34)
                 .overlay {
                     RoundedRectangle(cornerRadius: 10, style: .continuous)
                         .stroke(configuration.theme.foreground.opacity(0.16), lineWidth: 1)
@@ -440,6 +483,7 @@ public struct StrataShowcaseRootView: View {
                 .lineLimit(1)
                 .fixedSize(horizontal: true, vertical: false)
         }
+        .frame(maxWidth: .infinity)
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(title) token")
     }
@@ -647,6 +691,7 @@ public struct StrataShowcaseRootView: View {
             cornerRadius: 20,
             role: .region
         )
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private func layerHeader(number: String, title: String, subtitle: String) -> some View {
@@ -974,8 +1019,9 @@ public struct StrataShowcaseRootView: View {
         do {
             let numberSlot = try StrataNumberSlotConfiguration(
                 label: "Set \(setNumber)",
-                displayValue: "\(setNumber == 1 ? 80 : 8)",
-                unitLabel: setNumber == 1 ? "kg" : "reps",
+                displayValue: "8",
+                prefixBadge: "80 kg",
+                unitLabel: "reps",
                 isActive: !isCompleted,
                 isCompleted: isCompleted
             )
@@ -1016,9 +1062,10 @@ public struct StrataShowcaseRootView: View {
                         surface: .solid,
                         isLoading: false,
                         action: { selectedExercise = "New exercise" },
-                        label: { Text("Done").lineLimit(1) },
-                        loadingLabel: { Text("Adding").lineLimit(1) }
+                        label: { Text("Done").lineLimit(1).fixedSize(horizontal: true, vertical: false) },
+                        loadingLabel: { Text("Adding").lineLimit(1).fixedSize(horizontal: true, vertical: false) }
                     )
+                    .fixedSize(horizontal: true, vertical: false)
                 }
             })
         } catch {
