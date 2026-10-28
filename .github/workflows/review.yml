@@ -25,7 +25,10 @@ jobs:
     if: vars.SHARED_CI_REVIEW_RUNNER == 'true'
     uses: LeePepe/shared-ci/.github/workflows/codex-review.yml@fd8a187ef4872aa1aa69c4e9afec9782183cc02d
     with:
+      codex-bin: /opt/homebrew/bin/codex
       rules-file: docs/repository-guide.md
+      owner-user-id: "13819054"
+      max-diff-bytes: 1000000
 
   codex-review-gate:
     if: ${{ always() }}
@@ -50,9 +53,3 @@ jobs:
               exit 1
               ;;
           esac
-
-  kimi-review:
-    if: vars.SHARED_CI_REVIEW_RUNNER == 'true'
-    uses: LeePepe/shared-ci/.github/workflows/kimi-review.yml@fd8a187ef4872aa1aa69c4e9afec9782183cc02d
-    with:
-      rules-file: docs/repository-guide.md

@@ -1,3 +1,5 @@
+require "base64"
+
 default_platform(:ios)
 
 platform :ios do
@@ -73,8 +75,45 @@ platform :ios do
 
       upload_to_testflight(
         api_key: api_key,
-        skip_waiting_for_build_processing: true
+        skip_waiting_for_build_processing: false,
+        skip_submission: true,
+        distribute_external: false
       )
+
+      tf_group_names = ENV.fetch("TESTFLIGHT_GROUPS", "Internal")
+                          .split(",").map(&:strip).reject(&:empty?)
+      require "spaceship"
+      Spaceship::ConnectAPI.token = Spaceship::ConnectAPI::Token.create(
+        key_id: ENV.fetch("ASC_KEY_ID"),
+        issuer_id: ENV.fetch("ASC_ISSUER_ID"),
+        key: Base64.decode64(ENV.fetch("ASC_KEY_P8_BASE64"))
+      )
+      asc_app = Spaceship::ConnectAPI::App.find(bundle_id)
+      build = Spaceship::ConnectAPI::Build.all(
+        app_id: asc_app.id,
+        version: "1.0",
+        build_number: next_build.to_s
+      ).first
+      UI.user_error!("Uploaded build 1.0(#{next_build}) not found in ASC for distribution") if build.nil?
+
+      all_groups = asc_app.get_beta_groups
+      tf_group_names.each do |gname|
+        grp = all_groups.find { |g| g.name == gname }
+        if grp.nil?
+          grp = asc_app.create_beta_group(
+            group_name: gname,
+            is_internal_group: true,
+            has_access_to_all_builds: false,
+            public_link_enabled: nil,
+            public_link_limit_enabled: nil,
+            public_link_limit: nil
+          )
+        end
+        unless grp.fetch_builds.any? { |candidate| candidate.id == build.id }
+          build.add_beta_groups(beta_groups: [grp])
+        end
+        UI.success("Distributed build 1.0(#{next_build}) to beta group '#{gname}'.")
+      end
     ensure
       File.delete(local_xcconfig) if created_local_xcconfig && File.file?(local_xcconfig)
       project = File.join(repo_root, "app/DemoUI.xcodeproj")

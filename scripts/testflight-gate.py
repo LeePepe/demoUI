@@ -71,7 +71,10 @@ def check_contract() -> None:
             "ASC_KEY_P8_BASE64",
             "build_app",
             "upload_to_testflight",
-            "skip_waiting_for_build_processing: true",
+            "skip_waiting_for_build_processing: false",
+            "skip_submission: true",
+            "distribute_external: false",
+            "add_beta_groups",
         ),
         ".github/workflows/testflight.yml": (
             'workflows: ["ci"]',
