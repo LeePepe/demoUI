@@ -92,7 +92,8 @@ final class StrataShowcaseTests: XCTestCase {
         XCTAssertTrue(desktop.rendersWithoutScrollView)
     }
 
-    func testLayerNavigationPreservesAllShowcaseSections() {
+    @MainActor
+    func testLayerNavigationPreservesAllShowcaseSections() throws {
         XCTAssertEqual(
             ShowcaseSection.allCases.map(\.rawValue),
             ["overview", "workout", "picker", "controls", "states"]
@@ -100,6 +101,19 @@ final class StrataShowcaseTests: XCTestCase {
         XCTAssertEqual(ShowcaseSection.allCases.map(\.title), [
             "Overview", "Workout", "Picker", "Controls", "States"
         ])
+
+        let view = StrataShowcaseRootView(
+            configuration: try StrataShowcaseConfiguration(section: .overview),
+            rendersWithoutScrollView: true,
+            renderWidth: 393
+        )
+        let tabs = view.compactLayerTabs
+        XCTAssertEqual(tabs.count, 5)
+        XCTAssertEqual(tabs.map(\.section), ShowcaseSection.allCases)
+        XCTAssertEqual(Set(tabs.map(\.id)).count, tabs.count)
+        for selectedSection in ShowcaseSection.allCases {
+            XCTAssertEqual(tabs.filter { $0.section == selectedSection }.count, 1)
+        }
     }
 
     func testLayeredTokenAndWorkoutValuesResolve() throws {

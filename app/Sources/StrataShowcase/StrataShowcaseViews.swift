@@ -8,7 +8,7 @@ private struct ShowcaseListEntry: Identifiable {
     let detail: String
 }
 
-private struct ShowcaseLayerTab: Identifiable {
+struct ShowcaseLayerTab: Identifiable {
     let id: String
     let title: String
     let section: ShowcaseSection
@@ -281,19 +281,18 @@ public struct StrataShowcaseRootView: View {
         .background(configuration.theme.canvas)
     }
 
+    var compactLayerTabs: [ShowcaseLayerTab] {
+        ShowcaseSection.allCases.map { section in
+            ShowcaseLayerTab(id: section.rawValue, title: layerTabTitle(section), section: section)
+        }
+    }
+
     private var compactLayerTabItems: some View {
         LazyVGrid(
             columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 3),
             spacing: 8
         ) {
-            ForEach([
-                ShowcaseLayerTab(id: "all-layers", title: "All Layers", section: .overview),
-                ShowcaseLayerTab(id: "tokens", title: "L1 · Tokens", section: .overview),
-                ShowcaseLayerTab(id: "controls", title: "L2 · Controls", section: .controls),
-                ShowcaseLayerTab(id: "feedback", title: "L3 · Feedback", section: .states),
-                ShowcaseLayerTab(id: "workout", title: "L4 · Workout", section: .workout),
-                ShowcaseLayerTab(id: "picker", title: "L4 · Picker", section: .picker)
-            ]) { tab in
+            ForEach(compactLayerTabs) { tab in
                 layerTabButton(title: tab.title, section: tab.section)
             }
         }

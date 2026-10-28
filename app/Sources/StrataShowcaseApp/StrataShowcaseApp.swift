@@ -59,10 +59,10 @@ struct StrataShowcaseApp: App {
             let screenshots: [(String, StrataShowcaseConfiguration, CGSize, Bool)] = [
                 ("mobile-overview-blue-light", try StrataShowcaseConfiguration(
                     brand: .blue, appearance: .light, surfaceStyle: .solid, section: .overview
-                ), CGSize(width: 393, height: 2400), false),
+                ), CGSize(width: 393, height: 2600), false),
                 ("mobile-overview-purple-dark", try StrataShowcaseConfiguration(
                     brand: .purple, appearance: .dark, surfaceStyle: .glass, section: .overview
-                ), CGSize(width: 393, height: 2400), true),
+                ), CGSize(width: 393, height: 2600), true),
                 ("mobile-workout-blue-light", try StrataShowcaseConfiguration(
                     brand: .blue, appearance: .light, surfaceStyle: .glass, section: .workout
                 ), CGSize(width: 393, height: 852), false),
@@ -89,9 +89,20 @@ struct StrataShowcaseApp: App {
                     initialInspectorExpanded: inspectorExpanded,
                     renderWidth: size.width
                 )
-                    .frame(width: size.width, height: size.height, alignment: .top)
-                    .clipped()
-                let renderer = ImageRenderer(content: content)
+                let capturesFullOverview = configuration.section == .overview && size.width == 393
+                let capture = Group {
+                    if capturesFullOverview {
+                        content
+                            .fixedSize(horizontal: false, vertical: true)
+                            .frame(width: size.width)
+                            .frame(minHeight: size.height, alignment: .top)
+                    } else {
+                        content
+                            .frame(width: size.width, height: size.height, alignment: .top)
+                            .clipped()
+                    }
+                }
+                let renderer = ImageRenderer(content: capture)
                 renderer.scale = 2
                 guard let image = renderer.nsImage,
                       let tiff = image.tiffRepresentation,
