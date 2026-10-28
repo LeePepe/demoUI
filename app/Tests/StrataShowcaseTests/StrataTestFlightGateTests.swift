@@ -25,6 +25,14 @@ final class StrataTestFlightGateTests: XCTestCase {
         XCTAssertTrue(project.contains("PROVISIONING_PROFILE_SPECIFIER: $(DEMOUI_PROFILE_SPECIFIER)"))
         XCTAssertTrue(project.contains("INFOPLIST_KEY_CFBundleDisplayName: DemoUI"))
         XCTAssertTrue(project.contains("INFOPLIST_KEY_ITSAppUsesNonExemptEncryption: false"))
+        XCTAssertTrue(project.contains("ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon"))
+        XCTAssertTrue(
+            FileManager.default.fileExists(
+                atPath: repositoryRoot
+                    .appendingPathComponent("app/Resources/Assets.xcassets/AppIcon.appiconset/Contents.json")
+                    .path
+            )
+        )
 
         let workflow = try String(
             contentsOf: repositoryRoot.appendingPathComponent(".github/workflows/testflight.yml"),
