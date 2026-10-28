@@ -14,6 +14,7 @@ targets:
     sources:
       - Sources/StrataShowcase
       - Sources/StrataShowcaseApp
+      - Resources/Assets.xcassets
     configFiles:
       Debug: ../config/Signing.local.xcconfig
       Release: ../config/Signing.local.xcconfig
@@ -25,6 +26,7 @@ targets:
         CURRENT_PROJECT_VERSION: "1"
         GENERATE_INFOPLIST_FILE: true
         INFOPLIST_KEY_CFBundleDisplayName: DemoUI
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.developer-tools
         INFOPLIST_KEY_UIApplicationSceneManifest_Generation: true
         INFOPLIST_KEY_UILaunchScreen_Generation: true

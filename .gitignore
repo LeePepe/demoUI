@@ -10,4 +10,7 @@ fastlane/report.xml
 fastlane/test_output/
 *.ipa
 *.dSYM.zip
+*.mobileprovision
+AppStore_*.mobileprovision
+fastlane/README.md
 *.DS_Store
