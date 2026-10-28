@@ -56,26 +56,41 @@ struct StrataShowcaseApp: App {
         #if os(macOS)
         do {
             try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
-            let screenshots: [(String, StrataShowcaseConfiguration)] = [
+            let screenshots: [(String, StrataShowcaseConfiguration, CGSize, Bool)] = [
+                ("mobile-overview-blue-light", try StrataShowcaseConfiguration(
+                    brand: .blue, appearance: .light, surfaceStyle: .solid, section: .overview
+                ), CGSize(width: 393, height: 1400), false),
+                ("mobile-overview-purple-dark", try StrataShowcaseConfiguration(
+                    brand: .purple, appearance: .dark, surfaceStyle: .glass, section: .overview
+                ), CGSize(width: 393, height: 852), true),
+                ("mobile-workout-blue-light", try StrataShowcaseConfiguration(
+                    brand: .blue, appearance: .light, surfaceStyle: .glass, section: .workout
+                ), CGSize(width: 393, height: 852), false),
+                ("mobile-picker-purple-dark", try StrataShowcaseConfiguration(
+                    brand: .purple, appearance: .dark, surfaceStyle: .glass, section: .picker
+                ), CGSize(width: 393, height: 852), false),
                 ("showcase-overview-blue-light", try StrataShowcaseConfiguration(
                     brand: .blue, appearance: .light, surfaceStyle: .solid, section: .overview
-                )),
+                ), CGSize(width: 1200, height: 860), false),
                 ("showcase-overview-blue-dark", try StrataShowcaseConfiguration(
                     brand: .blue, appearance: .dark, surfaceStyle: .solid, section: .overview
-                )),
+                ), CGSize(width: 1200, height: 860), false),
                 ("showcase-workout-blue-light", try StrataShowcaseConfiguration(
                     brand: .blue, appearance: .light, surfaceStyle: .glass, section: .workout
-                )),
+                ), CGSize(width: 1200, height: 860), false),
                 ("showcase-picker-purple-dark", try StrataShowcaseConfiguration(
                     brand: .purple, appearance: .dark, surfaceStyle: .glass, section: .picker
-                ))
+                ), CGSize(width: 1200, height: 860), false)
             ]
-            for (name, configuration) in screenshots {
+            for (name, configuration, size, inspectorExpanded) in screenshots {
                 let content = StrataShowcaseRootView(
                     configuration: configuration,
-                    rendersWithoutScrollView: true
+                    rendersWithoutScrollView: true,
+                    initialInspectorExpanded: inspectorExpanded,
+                    renderWidth: size.width
                 )
-                    .frame(width: 1200, height: 860)
+                    .frame(width: size.width, height: size.height, alignment: .top)
+                    .clipped()
                 let renderer = ImageRenderer(content: content)
                 renderer.scale = 2
                 guard let image = renderer.nsImage,
