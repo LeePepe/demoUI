@@ -8,6 +8,12 @@ private struct ShowcaseListEntry: Identifiable {
     let detail: String
 }
 
+struct ShowcaseLayerTab: Identifiable {
+    let id: String
+    let title: String
+    let section: ShowcaseSection
+}
+
 public struct StrataShowcaseRootView: View {
     @State private var configuration: StrataShowcaseConfiguration
     @State private var interaction = StrataShowcaseInteractionState()
@@ -21,14 +27,20 @@ public struct StrataShowcaseRootView: View {
     @State private var snackbarItem: StrataSnackbarItem?
     @State private var dialogPresentation: StrataDialogPresentation?
     @State private var configurationError: String?
+    @State private var isInspectorExpanded: Bool
     public let rendersWithoutScrollView: Bool
+    public let renderWidth: CGFloat?
 
     public init(
         configuration: StrataShowcaseConfiguration,
-        rendersWithoutScrollView: Bool = false
+        rendersWithoutScrollView: Bool = false,
+        initialInspectorExpanded: Bool = false,
+        renderWidth: CGFloat? = nil
     ) {
         _configuration = State(initialValue: configuration)
+        _isInspectorExpanded = State(initialValue: initialInspectorExpanded)
         self.rendersWithoutScrollView = rendersWithoutScrollView
+        self.renderWidth = renderWidth
     }
 
     public var body: some View {
@@ -41,24 +53,30 @@ public struct StrataShowcaseRootView: View {
     private var showcaseHost: some View {
         configuredFeedbackHost(content:
             VStack(spacing: 0) {
-                globalControls
+                globalHeader
+                layerTabBar
                 if rendersWithoutScrollView {
-                    VStack(alignment: .leading, spacing: 16) {
-                        sectionContent
-                            .padding(24)
-                            .frame(maxWidth: 1400)
-                            .frame(maxWidth: .infinity)
-                    }
+                    sectionContent
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 20)
+                        .frame(width: max((renderWidth ?? 393) - 32, 0), alignment: .top)
                 } else {
                     ScrollView {
                         sectionContent
-                            .padding(24)
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 20)
                             .frame(maxWidth: 1400)
-                            .frame(maxWidth: .infinity)
+                            .frame(maxWidth: .infinity, alignment: .top)
                     }
                 }
+
             }
             .foregroundStyle(configuration.theme.foreground)
+            .frame(
+                minHeight: rendersWithoutScrollView ? 852 : nil,
+                alignment: .top
+            )
+            .frame(width: renderWidth, alignment: .top)
             .overlay(alignment: .bottom) {
                 if let configurationError {
                     Text(configurationError)
@@ -72,93 +90,262 @@ public struct StrataShowcaseRootView: View {
         )
     }
 
-    private var globalControls: some View {
+    private var globalHeader: some View {
         VStack(alignment: .leading, spacing: 12) {
-            HStack(alignment: .firstTextBaseline) {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("Strata Showcase")
-                        .font(.largeTitle.weight(.bold))
-                    Text("\(configuration.brand.title) / \(configuration.appearance.rawValue.capitalized) / \(configuration.surfaceStyle == .solid ? "Solid" : "Glass")")
-                        .font(.subheadline)
-                        .foregroundStyle(configuration.theme.secondaryForeground)
+            HStack(spacing: 10) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Strata")
+                        .font(.title2.weight(.bold))
+                        .lineLimit(1)
                 }
-                Spacer()
-                resolvedSegmentedBar(
-                    items: ShowcaseBrand.allCases.map {
-                        StrataSegmentedItem(id: $0.rawValue, title: $0.title)
-                    },
-                    selection: Binding(
-                        get: { configuration.brand.rawValue },
-                        set: { rawValue in
-                            if let brand = ShowcaseBrand(rawValue: rawValue) {
-                                updateConfiguration(brand: brand)
-                            }
-                        }
-                    )
-                )
+                .frame(minWidth: 86, alignment: .leading)
+                .layoutPriority(1)
+
+                Spacer(minLength: 0)
+
+                HStack(spacing: 8) {
+                    ForEach(ShowcaseBrand.allCases) { brand in
+                        brandSwatch(brand)
+                    }
+                }
+                .fixedSize(horizontal: true, vertical: false)
+
+                Button {
+                    isInspectorExpanded.toggle()
+                } label: {
+                    Label("Theme", systemImage: "slider.horizontal.3")
+                        .font(.caption.weight(.semibold))
+                        .lineLimit(1)
+                        .fixedSize(horizontal: true, vertical: false)
+                        .padding(.horizontal, 10)
+                        .frame(minHeight: 36)
+                }
+                .buttonStyle(.plain)
+                .foregroundStyle(configuration.theme.foreground)
+                .background(configuration.theme.surface(.inset), in: Capsule())
+                .accessibilityValue(isInspectorExpanded ? "Expanded" : "Collapsed")
             }
 
-            resolvedSegmentedBar(
-                items: Theme.allCases.map {
-                    StrataSegmentedItem(id: $0.rawValue, title: $0.rawValue.capitalized)
-                },
-                selection: Binding(
-                    get: { configuration.appearance.rawValue },
-                    set: { rawValue in
-                        if let appearance = Theme(rawValue: rawValue) {
-                            updateConfiguration(appearance: appearance)
-                        }
-                    }
-                )
-            )
+            Text(configurationSummary)
+                .font(.caption.weight(.medium))
+                .foregroundStyle(configuration.theme.secondaryForeground)
+                .lineLimit(1)
+                .fixedSize(horizontal: false, vertical: true)
+                .frame(maxWidth: .infinity, alignment: .leading)
 
-            HStack(spacing: 8) {
-                resolvedSegmentedBar(
-                    items: [
-                        StrataSegmentedItem(id: "solid", title: "Solid"),
-                        StrataSegmentedItem(id: "glass", title: "Glass")
-                    ],
-                    selection: Binding(
-                        get: { configuration.surfaceStyle == .solid ? "solid" : "glass" },
-                        set: { updateConfiguration(surfaceStyle: $0 == "glass" ? .glass : .solid) }
-                    )
-                )
-                resolvedSegmentedBar(
-                    items: ShowcaseDataState.allCases.map {
-                        StrataSegmentedItem(id: $0.rawValue, title: $0.rawValue.capitalized)
-                    },
-                    selection: Binding(
-                        get: { configuration.dataState.rawValue },
-                        set: { rawValue in
-                            if let dataState = ShowcaseDataState(rawValue: rawValue) {
-                                updateConfiguration(dataState: dataState)
-                            }
-                        }
-                    )
-                )
+            if isInspectorExpanded {
+                inspector
+                    .transition(.opacity.combined(with: .move(edge: .top)))
             }
-
-            resolvedSegmentedBar(
-                items: ShowcaseSection.allCases.map {
-                    StrataSegmentedItem(id: $0.rawValue, title: $0.title)
-                },
-                selection: Binding(
-                    get: { configuration.section.rawValue },
-                    set: { rawValue in
-                        if let section = ShowcaseSection(rawValue: rawValue) {
-                            updateConfiguration(section: section)
-                        }
-                    }
-                )
-            )
         }
-        .padding(20)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 10)
         .strataSurface(
             theme: configuration.theme,
             style: configuration.surfaceStyle,
             cornerRadius: 0,
             role: .region
         )
+    }
+
+    private var configurationSummary: String {
+        "\(configuration.brand.title) · \(configuration.appearance.rawValue.capitalized) · \(configuration.surfaceStyle == .solid ? "Solid" : "Glass") · \(configuration.dataState.rawValue.capitalized)"
+    }
+
+    private var inspector: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 10) {
+                inspectorPillGroup(
+                    label: "Appearance",
+                    items: Theme.allCases.map { ($0.rawValue, $0.rawValue.capitalized) },
+                    selection: configuration.appearance.rawValue
+                ) { value in
+                    if let appearance = Theme(rawValue: value) {
+                        updateConfiguration(appearance: appearance)
+                    }
+                }
+                inspectorPillGroup(
+                    label: "Surface",
+                    items: [("solid", "Solid"), ("glass", "Glass")],
+                    selection: configuration.surfaceStyle == .solid ? "solid" : "glass"
+                ) { value in
+                    updateConfiguration(surfaceStyle: value == "glass" ? .glass : .solid)
+                }
+            }
+            inspectorPillGroup(
+                label: "Data state",
+                items: ShowcaseDataState.allCases.map { ($0.rawValue, $0.rawValue.capitalized) },
+                selection: configuration.dataState.rawValue,
+                distributesItems: true
+            ) { value in
+                if let dataState = ShowcaseDataState(rawValue: value) {
+                    updateConfiguration(dataState: dataState)
+                }
+            }
+        }
+    }
+
+    private func inspectorPillGroup(
+        label: String,
+        items: [(String, String)],
+        selection: String,
+        distributesItems: Bool = false,
+        action: @escaping (String) -> Void
+    ) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(label.uppercased())
+                .font(.caption2.weight(.bold))
+                .foregroundStyle(configuration.theme.secondaryForeground)
+                .lineLimit(1)
+            HStack(spacing: 4) {
+                ForEach(items, id: \.0) { item in
+                    Button {
+                        action(item.0)
+                    } label: {
+                        Text(item.1)
+                            .font(.caption.weight(.semibold))
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.85)
+                            .fixedSize(horizontal: !distributesItems, vertical: false)
+                            .frame(maxWidth: distributesItems ? .infinity : nil)
+                            .frame(minHeight: 34)
+                            .padding(.horizontal, 8)
+                    }
+                    .buttonStyle(.plain)
+                    .foregroundStyle(item.0 == selection ? configuration.theme.onAccent : configuration.theme.foreground)
+                    .background(
+                        item.0 == selection ? configuration.theme.accent : configuration.theme.surface(.card),
+                        in: Capsule()
+                    )
+                    .accessibilityAddTraits(item.0 == selection ? .isSelected : [])
+                }
+            }
+            .padding(4)
+            .background(configuration.theme.surface(.inset), in: Capsule())
+        }
+        .frame(maxWidth: distributesItems ? .infinity : nil, alignment: .leading)
+    }
+
+    private func brandSwatch(_ brand: ShowcaseBrand) -> some View {
+        do {
+            let brandTheme = try StrataTheme(theme: configuration.appearance, brand: brand.rawValue)
+            return AnyView(
+                Button {
+                    updateConfiguration(brand: brand)
+                } label: {
+                    ZStack {
+                        Circle()
+                            .fill(brandTheme.accent)
+                            .frame(width: 26, height: 26)
+                        if configuration.brand == brand {
+                            Circle()
+                                .stroke(configuration.theme.foreground, lineWidth: 2)
+                                .frame(width: 28, height: 28)
+                            Image(systemName: "checkmark")
+                                .font(.caption2.weight(.bold))
+                                .foregroundStyle(brandTheme.onAccent)
+                        }
+                    }
+                    .frame(width: 30, height: 30)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(brand.title)
+                .accessibilityAddTraits(configuration.brand == brand ? .isSelected : [])
+            )
+        } catch {
+            return AnyView(failureView(error))
+        }
+    }
+
+    @ViewBuilder
+    private var layerTabBar: some View {
+        Group {
+            if rendersWithoutScrollView, (renderWidth ?? .infinity) <= 600 {
+                compactLayerTabItems
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 100)
+            } else if rendersWithoutScrollView {
+                layerTabItems
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .frame(height: 54)
+                    .clipped()
+            } else {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    layerTabItems
+                }
+                .frame(height: 54)
+            }
+        }
+        .frame(width: renderWidth, alignment: .leading)
+        .clipped()
+        .background(configuration.theme.canvas)
+    }
+
+    var compactLayerTabs: [ShowcaseLayerTab] {
+        ShowcaseSection.allCases.map { section in
+            ShowcaseLayerTab(id: section.rawValue, title: layerTabTitle(section), section: section)
+        }
+    }
+
+    private var compactLayerTabItems: some View {
+        LazyVGrid(
+            columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 3),
+            spacing: 8
+        ) {
+            ForEach(compactLayerTabs) { tab in
+                layerTabButton(title: tab.title, section: tab.section)
+            }
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 8)
+    }
+
+    private var layerTabItems: some View {
+        HStack(spacing: 8) {
+            ForEach(ShowcaseSection.allCases) { section in
+                layerTabButton(title: layerTabTitle(section), section: section)
+            }
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 8)
+    }
+
+    private func layerTabButton(title: String, section: ShowcaseSection) -> some View {
+        Button {
+            updateConfiguration(section: section)
+        } label: {
+            Text(title)
+                .font(.callout.weight(.semibold))
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
+                .fixedSize(horizontal: !((renderWidth ?? .infinity) <= 600), vertical: false)
+                .frame(maxWidth: .infinity)
+                .padding(.horizontal, 8)
+                .frame(minHeight: 38)
+        }
+        .buttonStyle(.plain)
+        .foregroundStyle(
+            configuration.section == section
+                ? configuration.theme.onAccent
+                : configuration.theme.foreground
+        )
+        .background(
+            configuration.section == section
+                ? configuration.theme.accent
+                : configuration.theme.surface(.card),
+            in: Capsule()
+        )
+        .accessibilityAddTraits(configuration.section == section ? .isSelected : [])
+    }
+
+    private func layerTabTitle(_ section: ShowcaseSection) -> String {
+        switch section {
+        case .overview: "All Layers"
+        case .workout: "L4 · Workout"
+        case .picker: "L4 · Picker"
+        case .controls: "L2 · Controls"
+        case .states: "L3 · Feedback"
+        }
     }
 
     @ViewBuilder
@@ -178,153 +365,350 @@ public struct StrataShowcaseRootView: View {
     }
 
     private var overviewSection: some View {
-        VStack(alignment: .leading, spacing: 20) {
-            sectionHeading("Overview", subtitle: "Foundations, controls, patterns, and the active data state.")
+        VStack(alignment: .leading, spacing: 24) {
+            layerHeader(
+                number: "SHOWCASE",
+                title: "Strata design system",
+                subtitle: "A layered component language for VitalStride product surfaces."
+            )
             if configuration.dataState == .populated {
-                LazyVGrid(columns: [GridItem(.adaptive(minimum: 280), spacing: 16)], spacing: 16) {
-                    cardGallery
-                    controlGallery
-                    patternGallery
-                }
+                foundationsLayer
+                controlsLayer
+                feedbackLayer
+                compositionsLayer
             } else {
                 activeDataStateView
             }
         }
     }
 
-    @ViewBuilder
-    private var cardGallery: some View {
-        StrataCard(theme: configuration.theme, surface: configuration.surfaceStyle) {
-            VStack(alignment: .leading, spacing: 12) {
-                Text("Card and avatar")
-                HStack {
-                    StrataAvatar(
-                        theme: configuration.theme,
-                        size: .large,
-                        accessibilityLabel: Text("Strata showcase avatar")
-                    ) {
-                        Text("S")
+    private var foundationsLayer: some View {
+        layerSection(
+            number: "LAYER 01",
+            title: "Foundations & Surfaces",
+            subtitle: "Tokens, semantic surfaces, identity primitives"
+        ) {
+            VStack(alignment: .leading, spacing: 14) {
+                tokenSwatches
+                if rendersWithoutScrollView {
+                    VStack(alignment: .leading, spacing: 12) {
+                        foundationMaterialCard
+                        foundationIdentityCard
                     }
-                    VStack(alignment: .leading) {
-                        Text("Strata athlete")
-                        Text("Foundations")
-                            .font(.caption)
-                            .foregroundStyle(configuration.theme.secondaryForeground)
+                } else {
+                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 220), spacing: 12)], spacing: 12) {
+                        foundationMaterialCard
+                        foundationIdentityCard
                     }
                 }
             }
         }
     }
 
-    @ViewBuilder
-    private var controlGallery: some View {
-        StrataCard(
-            theme: configuration.theme,
-            surface: configuration.surfaceStyle,
-            header: { Text("Controls") },
-            content: {
-                VStack(alignment: .leading, spacing: 8) {
-                    StrataSwitch(theme: configuration.theme, isOn: $isEnabled) {
-                        Text("Enabled")
-                    }
-                    StrataCheckbox(theme: configuration.theme, isOn: $isChecked) {
-                        Text("Completed")
-                    }
-                    StrataChip(theme: configuration.theme, tone: .accent) {
-                        Text("Strength")
-                    }
-                }
-            },
-            supporting: { Text("Native bindings stay owned by the caller.") },
-            actions: { EmptyView() }
-        )
-    }
-
-    @ViewBuilder
-    private var patternGallery: some View {
+    private var foundationMaterialCard: some View {
         StrataCard(theme: configuration.theme, surface: configuration.surfaceStyle) {
             VStack(alignment: .leading, spacing: 12) {
-                Text("State \(configuration.dataState.rawValue.capitalized)")
-                resolvedStateView(kind: .empty, title: "No recent sets", message: "Add a set to see it here.")
+                Text("Material comparison")
+                    .font(.headline)
+                HStack(spacing: 10) {
+                    materialTile(title: "Solid", style: .solid)
+                    materialTile(title: "Glass", style: .glass)
+                }
+            }
+        }
+    }
+
+    private var foundationIdentityCard: some View {
+        StrataCard(theme: configuration.theme, surface: configuration.surfaceStyle) {
+            VStack(alignment: .leading, spacing: 12) {
+                Text("Identity scale")
+                    .font(.headline)
+                HStack(spacing: 14) {
+                    avatar("S", size: .small, label: "Small avatar")
+                    avatar("S", size: .medium, label: "Medium avatar")
+                    avatar("S", size: .large, label: "Large avatar")
+                }
                 resolvedProgressBar
             }
         }
     }
 
-    private var controlsSection: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            sectionHeading("Controls", subtitle: "Every Strata control receives the resolved theme explicitly.")
-            LazyVGrid(columns: [GridItem(.adaptive(minimum: 300), spacing: 16)], spacing: 16) {
+    private var tokenSwatches: some View {
+        do {
+            let warning = try StrataTokenColor.resolve(
+                "status.strata.warning",
+                theme: configuration.appearance
+            )
+            return AnyView(
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Semantic token map")
+                        .font(.headline)
+                    tokenSwatchItems(warningColor: warning)
+                }
+            )
+        } catch {
+            return AnyView(failureView(error))
+        }
+    }
+
+    private func tokenSwatchItems(warningColor: Color) -> some View {
+        LazyVGrid(
+            columns: [GridItem(.adaptive(minimum: 76), spacing: 8)],
+            spacing: 8
+        ) {
+            tokenSwatch("Canvas", color: configuration.theme.canvas)
+            tokenSwatch("Surface", color: configuration.theme.surface)
+            tokenSwatch("Elevated", color: configuration.theme.surface(.card))
+            tokenSwatch("Accent", color: configuration.theme.accent)
+            tokenSwatch("Success", color: configuration.theme.success)
+            tokenSwatch("Warning", color: warningColor)
+            tokenSwatch("Critical", color: configuration.theme.critical)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private func tokenSwatch(_ title: String, color: Color) -> some View {
+        VStack(alignment: .leading, spacing: 5) {
+            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                .fill(color)
+                .frame(maxWidth: .infinity)
+                .frame(height: 34)
+                .overlay {
+                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                        .stroke(configuration.theme.foreground.opacity(0.16), lineWidth: 1)
+                }
+            Text(title)
+                .font(.caption2.weight(.semibold))
+                .lineLimit(1)
+                .fixedSize(horizontal: true, vertical: false)
+        }
+        .frame(maxWidth: .infinity)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(title) token")
+    }
+
+    private func materialTile(title: String, style: StrataSurfaceStyle) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(title)
+                .font(.caption.weight(.semibold))
+                .lineLimit(1)
+            ZStack {
+                Image(systemName: style == .solid ? "square.fill" : "square.stack.3d.up")
+                    .font(.title2)
+                    .foregroundStyle(configuration.theme.accent)
+            }
+            .frame(maxWidth: .infinity)
+            .frame(height: 64)
+            .strataSurface(theme: configuration.theme, style: style, cornerRadius: 14, role: .card)
+        }
+    }
+
+    private func avatar(_ text: String, size: StrataAvatarSize, label: String) -> some View {
+        StrataAvatar(theme: configuration.theme, size: size, accessibilityLabel: Text(label)) {
+            Text(text)
+        }
+    }
+
+    private var controlsLayer: some View {
+        layerSection(
+            number: "LAYER 02",
+            title: "Form Controls & Inputs",
+            subtitle: "Actions, selection, text entry, and adjustable values"
+        ) {
+            VStack(alignment: .leading, spacing: 12) {
                 StrataCard(theme: configuration.theme, surface: configuration.surfaceStyle) {
                     VStack(alignment: .leading, spacing: 12) {
-                        Text("Actions")
-                        StrataButton(
-                            theme: configuration.theme,
-                            variant: .primary,
-                            surface: configuration.surfaceStyle,
-                            isLoading: configuration.dataState == .loading,
-                            action: { presentRPEDialog() },
-                            label: { Text("Open RPE dialog") },
-                            loadingLabel: { Text("Opening") }
-                        )
-                        StrataButton(
-                            theme: configuration.theme,
-                            variant: .secondary,
-                            surface: configuration.surfaceStyle,
-                            isLoading: false,
-                            action: { interaction.presentFinishConfirmation() },
-                            label: { Text("Finish workout") },
-                            loadingLabel: { Text("Finishing") }
-                        )
+                        Text("Actions & filters")
+                            .font(.headline)
+                        HStack(spacing: 8) {
+                            showcaseButton("Primary", variant: .primary) { presentRPEDialog() }
+                            showcaseButton("Secondary", variant: .secondary) {}
+                            showcaseButton("Destructive", variant: .secondary) { notes = "" }
+                        }
+                        HStack(spacing: 8) {
+                            StrataChip(theme: configuration.theme, tone: .accent) { Text("Strength").lineLimit(1) }
+                            StrataChip(theme: configuration.theme, tone: .neutral) { Text("3 sets").lineLimit(1) }
+                            StrataChip(theme: configuration.theme, tone: .critical) { Text("Needs review").lineLimit(1) }
+                        }
                     }
                 }
                 StrataCard(theme: configuration.theme, surface: configuration.surfaceStyle) {
                     VStack(alignment: .leading, spacing: 12) {
-                        Text("Inputs")
-                        StrataTextField(
-                            theme: configuration.theme,
-                            text: $notes,
-                            prompt: Text("Exercise name"),
-                            label: { Text("Search notes") }
-                        )
+                        Text("Text and numeric input")
+                            .font(.headline)
+                        resolvedSearchField
+                        resolvedNotesField
                         resolvedSlider
-                        resolvedRadioGroup
                     }
                 }
                 StrataCard(theme: configuration.theme, surface: configuration.surfaceStyle) {
+                    VStack(alignment: .leading, spacing: 10) {
+                        Text("Selection controls")
+                            .font(.headline)
+                        selectionControls
+                    }
+                }
+            }
+        }
+    }
+
+    private func showcaseButton(
+        _ title: String,
+        variant: StrataButtonVariant,
+        action: @escaping () -> Void
+    ) -> some View {
+        StrataButton(
+            theme: configuration.theme,
+            variant: variant,
+            surface: configuration.surfaceStyle,
+            isLoading: false,
+            action: action,
+            label: { Text(title).lineLimit(1).minimumScaleFactor(0.8) },
+            loadingLabel: { Text("Working").lineLimit(1) }
+        )
+    }
+
+    private var feedbackLayer: some View {
+        layerSection(
+            number: "LAYER 03",
+            title: "Navigation, Modals & Feedback",
+            subtitle: "Headers, menus, transient feedback, dialogs, and lists"
+        ) {
+            VStack(alignment: .leading, spacing: 12) {
+                StrataCard(theme: configuration.theme, surface: configuration.surfaceStyle) {
                     VStack(alignment: .leading, spacing: 12) {
-                        Text("Selection")
-                        StrataSwitch(theme: configuration.theme, isOn: $isEnabled) {
-                            Text("Notifications")
-                        }
-                        StrataCheckbox(theme: configuration.theme, isOn: $isChecked) {
-                            Text("Use last weight")
-                        }
-                        StrataChip(
+                        StrataSectionHeader(
                             theme: configuration.theme,
-                            tone: .critical,
-                            removalAccessibilityLabel: Text("Remove filter"),
-                            onRemove: { notes = "" }
+                            title: "Recent training",
+                            subtitle: "Choose an exercise to continue",
+                            badgeText: "2 items"
                         ) {
-                            Text("Needs review")
+                            workoutMenu
                         }
-                    }
-                }
-                StrataCard(theme: configuration.theme, surface: configuration.surfaceStyle) {
-                    VStack(alignment: .leading, spacing: 12) {
-                        Text("List, progress, and avatar")
                         resolvedList
-                        resolvedProgressBar
-                        StrataAvatar(
-                            theme: configuration.theme,
-                            size: .large,
-                            accessibilityLabel: Text("Strata showcase avatar")
-                        ) {
-                            Text("S")
+                    }
+                }
+                StrataCard(theme: configuration.theme, surface: configuration.surfaceStyle) {
+                    VStack(alignment: .leading, spacing: 10) {
+                        Text("Feedback playground")
+                            .font(.headline)
+                        HStack(spacing: 8) {
+                            showcaseButton("Undo snackbar", variant: .secondary) { presentUndoSnackbar() }
+                            showcaseButton("5s timer", variant: .secondary) { presentTimedSnackbar() }
+                        }
+                        HStack(spacing: 8) {
+                            showcaseButton("RPE dialog", variant: .primary) { presentRPEDialog() }
+                            showcaseButton("Finish confirmation", variant: .secondary) {
+                                interaction.presentFinishConfirmation()
+                            }
                         }
                     }
                 }
             }
+        }
+    }
+
+    private var compositionsLayer: some View {
+        layerSection(
+            number: "LAYER 04",
+            title: "VitalStride Product Compositions",
+            subtitle: "Focused previews of the workout and exercise picker flows"
+        ) {
+            LazyVGrid(columns: [GridItem(.adaptive(minimum: 260), spacing: 12)], spacing: 12) {
+                StrataCard(theme: configuration.theme, surface: configuration.surfaceStyle) {
+                    VStack(alignment: .leading, spacing: 10) {
+                        HStack {
+                            Text("Active workout set table")
+                                .font(.headline)
+                            Spacer()
+                            Text("L4")
+                                .font(.caption.weight(.bold))
+                                .foregroundStyle(configuration.theme.accent)
+                        }
+                        HStack(spacing: 8) {
+                            resolvedNumberSlot(id: "overview-bench", isCompleted: false, setNumber: 1)
+                            resolvedNumberSlot(id: "overview-reps", isCompleted: true, setNumber: 2)
+                        }
+                        showcaseButton("Open Workout", variant: .primary) {
+                            updateConfiguration(section: .workout)
+                        }
+                    }
+                }
+                StrataCard(theme: configuration.theme, surface: configuration.surfaceStyle) {
+                    VStack(alignment: .leading, spacing: 10) {
+                        HStack {
+                            Text("Exercise picker")
+                                .font(.headline)
+                            Spacer()
+                            Text("L4")
+                                .font(.caption.weight(.bold))
+                                .foregroundStyle(configuration.theme.accent)
+                        }
+                        HStack(spacing: 8) {
+                            VStack(spacing: 4) {
+                                ForEach(["A", "B", "C"], id: \.self) { letter in
+                                    Text(letter)
+                                        .font(.caption.weight(.bold))
+                                        .frame(width: 28, height: 26)
+                                        .background(
+                                            letter == "A" ? configuration.theme.accentSubtle : configuration.theme.surface(.inset),
+                                            in: RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                        )
+                                }
+                            }
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Bench press")
+                                Text("Cable fly")
+                            }
+                            .font(.subheadline)
+                            .foregroundStyle(configuration.theme.secondaryForeground)
+                            Spacer()
+                        }
+                        showcaseButton("Open Picker", variant: .secondary) {
+                            updateConfiguration(section: .picker)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private func layerSection<Content: View>(
+        number: String,
+        title: String,
+        subtitle: String,
+        @ViewBuilder content: () -> Content
+    ) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            layerHeader(number: number, title: title, subtitle: subtitle)
+            content()
+        }
+        .padding(14)
+        .strataSurface(
+            theme: configuration.theme,
+            style: configuration.surfaceStyle,
+            cornerRadius: 20,
+            role: .region
+        )
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private func layerHeader(number: String, title: String, subtitle: String) -> some View {
+        VStack(alignment: .leading, spacing: 3) {
+            Text(number)
+                .font(.caption.weight(.bold))
+                .tracking(1.2)
+                .foregroundStyle(configuration.theme.accent)
+                .lineLimit(1)
+            Text(title)
+                .font(.title3.weight(.bold))
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
+            Text(subtitle)
+                .font(.caption)
+                .foregroundStyle(configuration.theme.secondaryForeground)
+                .lineLimit(1)
+                .minimumScaleFactor(0.75)
         }
     }
 
@@ -334,7 +718,11 @@ public struct StrataShowcaseRootView: View {
             workoutContent
         } else {
             VStack(alignment: .leading, spacing: 16) {
-                sectionHeading("Active Workout", subtitle: "Set completion, RPE, undo, and finish confirmation.")
+                layerHeader(
+                    number: "LAYER 04",
+                    title: "VitalStride Active Workout",
+                    subtitle: "A mobile-ready composition for a live training session."
+                )
                 activeDataStateView
             }
         }
@@ -342,69 +730,67 @@ public struct StrataShowcaseRootView: View {
 
     private var workoutContent: some View {
         VStack(alignment: .leading, spacing: 16) {
-            sectionHeading("Active Workout", subtitle: "Set completion, RPE, undo, and finish confirmation.")
-            HStack {
-                StrataSectionHeader(
-                    theme: configuration.theme,
-                    title: "Upper body strength",
-                    subtitle: "Tuesday, 24 October",
-                    badgeText: "3 exercises"
-                ) {
-                    workoutMenu
+            layerHeader(
+                number: "LAYER 04 · WORKOUT",
+                title: "Upper Body Strength",
+                subtitle: "Tuesday · 3 exercises"
+            )
+            StrataCard(theme: configuration.theme, surface: configuration.surfaceStyle) {
+                VStack(alignment: .leading, spacing: 12) {
+                    StrataSectionHeader(
+                        theme: configuration.theme,
+                        title: "Upper Body Strength",
+                        subtitle: "Tuesday · 3 exercises",
+                        badgeText: "9 sets"
+                    ) {
+                        workoutMenu
+                    }
+                    resolvedSegmentedBar(
+                        items: [
+                            StrataSegmentedItem(id: "overall", title: "Overall"),
+                            StrataSegmentedItem(id: "left-right", title: "Left / Right")
+                        ],
+                        selection: Binding(
+                            get: { interaction.selectedWorkoutMetric },
+                            set: { interaction.selectWorkoutMetric($0) }
+                        )
+                    )
                 }
-                Spacer()
             }
 
             ForEach(["Bench press", "Cable row", "Shoulder press"], id: \.self) { exercise in
                 StrataCard(theme: configuration.theme, surface: configuration.surfaceStyle) {
-                    VStack(alignment: .leading, spacing: 12) {
+                    VStack(alignment: .leading, spacing: 10) {
                         Text(exercise)
                             .font(.headline)
-                        HStack(spacing: 8) {
-                            ForEach(1...3, id: \.self) { setNumber in
-                                let id = "\(exercise)-\(setNumber)"
+                            .lineLimit(1)
+                        ForEach(1...3, id: \.self) { setNumber in
+                            let id = "\(exercise)-\(setNumber)"
+                            HStack(spacing: 10) {
+                                Text("Set \(setNumber)")
+                                    .font(.subheadline.weight(.semibold))
+                                    .foregroundStyle(configuration.theme.secondaryForeground)
+                                    .lineLimit(1)
+                                    .frame(width: 48, alignment: .leading)
                                 resolvedNumberSlot(
                                     id: id,
                                     isCompleted: interaction.completedSetIDs.contains(id),
                                     setNumber: setNumber
                                 )
+                                Spacer(minLength: 0)
                             }
                         }
                     }
                 }
             }
 
-            resolvedSegmentedBar(
-                items: [
-                    StrataSegmentedItem(id: "overall", title: "Overall"),
-                    StrataSegmentedItem(id: "left-right", title: "Left / Right")
-                ],
-                selection: Binding(
-                    get: { interaction.selectedWorkoutMetric },
-                    set: { interaction.selectWorkoutMetric($0) }
-                )
-            )
-
-            HStack(spacing: 12) {
-                StrataButton(
-                    theme: configuration.theme,
-                    variant: .secondary,
-                    surface: configuration.surfaceStyle,
-                    isLoading: false,
-                    action: { presentRPEDialog() },
-                    label: { Text("Rate RPE") },
-                    loadingLabel: { Text("Opening") }
-                )
-                StrataButton(
-                    theme: configuration.theme,
-                    variant: .primary,
-                    surface: configuration.surfaceStyle,
-                    isLoading: false,
-                    action: { interaction.presentFinishConfirmation() },
-                    label: { Text("Finish workout") },
-                    loadingLabel: { Text("Finishing") }
-                )
+            HStack(spacing: 8) {
+                showcaseButton("Rate RPE", variant: .secondary) { presentRPEDialog() }
+                showcaseButton("Finish workout", variant: .primary) {
+                    interaction.presentFinishConfirmation()
+                }
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
     }
 
@@ -414,7 +800,11 @@ public struct StrataShowcaseRootView: View {
             pickerContent
         } else {
             VStack(alignment: .leading, spacing: 16) {
-                sectionHeading("Exercise Picker", subtitle: "Muscle rail, searchable exercise cards, index rail, and docked actions.")
+                layerHeader(
+                    number: "LAYER 04",
+                    title: "VitalStride Exercise Picker",
+                    subtitle: "Find the next movement without losing context."
+                )
                 activeDataStateView
             }
         }
@@ -422,12 +812,19 @@ public struct StrataShowcaseRootView: View {
 
     private var pickerContent: some View {
         VStack(alignment: .leading, spacing: 16) {
-            sectionHeading("Exercise Picker", subtitle: "Muscle rail, searchable exercise cards, index rail, and docked actions.")
-            HStack(alignment: .top, spacing: 16) {
+            layerHeader(
+                number: "LAYER 04 · PICKER",
+                title: "VitalStride Exercise Picker",
+                subtitle: "Muscle rail, focused exercise cards, index rail, and docked actions."
+            )
+            HStack(alignment: .top, spacing: 8) {
                 resolvedSegmentedBar(
-                    items: ["Chest", "Back", "Legs", "Shoulders"].map {
-                        StrataSegmentedItem(id: $0, title: $0, badgeCount: $0 == "Chest" ? 8 : 4)
-                    },
+                    items: [
+                        StrataSegmentedItem(id: "All 7", title: "All 7"),
+                        StrataSegmentedItem(id: "Chest", title: "Chest 3"),
+                        StrataSegmentedItem(id: "Back", title: "Back 2"),
+                        StrataSegmentedItem(id: "Legs", title: "Legs 2")
+                    ],
                     selection: Binding(
                         get: { interaction.selectedMuscle },
                         set: { interaction.selectMuscle($0) }
@@ -435,79 +832,106 @@ public struct StrataShowcaseRootView: View {
                     axis: .vertical
                 )
                 .frame(width: 76, alignment: .top)
-                VStack(alignment: .leading, spacing: 12) {
+
+                VStack(alignment: .leading, spacing: 10) {
                     Text("\(interaction.selectedMuscle) exercises")
                         .font(.headline)
-                    ForEach(["Barbell bench press", "Incline dumbbell press", "Cable fly"], id: \.self) { exercise in
-                        StrataCard(theme: configuration.theme, surface: configuration.surfaceStyle) {
-                            HStack {
-                                StrataAvatar(
-                                    theme: configuration.theme,
-                                    size: .medium,
-                                    accessibilityLabel: Text(exercise)
-                                ) {
-                                    Image(systemName: "figure.strengthtraining.traditional")
-                                }
-                                VStack(alignment: .leading) {
-                                    Text(exercise)
-                                    Text("Chest · \(configuration.dataState.rawValue)")
-                                        .font(.caption)
+                        .lineLimit(1)
+                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 220), spacing: 10)], spacing: 10) {
+                        ForEach(["Barbell bench press", "Incline dumbbell press", "Cable fly"], id: \.self) { exercise in
+                            StrataCard(theme: configuration.theme, surface: configuration.surfaceStyle) {
+                                HStack(spacing: 10) {
+                                    StrataAvatar(
+                                        theme: configuration.theme,
+                                        size: .medium,
+                                        accessibilityLabel: Text(exercise)
+                                    ) {
+                                        Image(systemName: "figure.strengthtraining.traditional")
+                                    }
+                                    VStack(alignment: .leading, spacing: 3) {
+                                        Text(exercise)
+                                            .font(.subheadline.weight(.semibold))
+                                            .lineLimit(1)
+                                            .minimumScaleFactor(0.8)
+                                        Text("Chest · 3 sets")
+                                            .font(.caption)
+                                            .foregroundStyle(configuration.theme.secondaryForeground)
+                                            .lineLimit(1)
+                                    }
+                                    Spacer(minLength: 0)
+                                    Image(systemName: "chevron.right")
                                         .foregroundStyle(configuration.theme.secondaryForeground)
                                 }
-                                Spacer()
-                                Image(systemName: "chevron.right")
-                                    .foregroundStyle(configuration.theme.secondaryForeground)
                             }
+                            .onTapGesture { selectedExercise = exercise }
                         }
-                        .onTapGesture { selectedExercise = exercise }
                     }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
+
                 StrataIndexRail(
                     theme: configuration.theme,
-                    items: ["A", "B", "C", "D", "E", "F"].map {
+                    items: ["A", "B", "C", "L", "R", "S"].map {
                         StrataIndexRailItem(id: $0, shortLabel: $0, fullTitle: "Exercises beginning with \($0)")
                     },
                     activeID: interaction.selectedLetter,
-                    showsHUD: true,
+                    showsHUD: !rendersWithoutScrollView,
                     onSelect: { interaction.selectLetter($0) }
                 )
+                .frame(width: 28)
             }
             resolvedDockedBar
         }
     }
 
+    private var controlsSection: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            layerHeader(
+                number: "LAYER 02",
+                title: "Controls & Inputs",
+                subtitle: "The complete interaction vocabulary, isolated for review."
+            )
+            controlsLayer
+        }
+    }
+
     private var statesSection: some View {
         VStack(alignment: .leading, spacing: 16) {
-            sectionHeading("States", subtitle: "Empty, loading, and error states remain explicit and actionable.")
-            HStack(alignment: .top, spacing: 12) {
+            layerHeader(
+                number: "LAYER 03",
+                title: "Feedback & States",
+                subtitle: "Empty, loading, and error states remain explicit and actionable."
+            )
+            if configuration.dataState != .populated {
+                activeDataStateView
+            }
+            LazyVGrid(columns: [GridItem(.adaptive(minimum: 220), spacing: 12)], spacing: 12) {
                 resolvedStateView(kind: .empty, title: "Nothing here", message: "Create a workout to populate this view.", actionTitle: "Create workout")
                 resolvedStateView(kind: .loading, title: "Loading workout", message: "Resolving the latest session.")
                 resolvedStateView(kind: .error, title: "Could not load", message: "Try again when the connection is restored.", actionTitle: "Retry")
             }
-            StrataCard(theme: configuration.theme, surface: configuration.surfaceStyle) {
-                VStack(alignment: .leading, spacing: 12) {
-                    Text("Feedback playground")
-                    StrataButton(
-                        theme: configuration.theme,
-                        variant: .secondary,
-                        surface: configuration.surfaceStyle,
-                        isLoading: false,
-                        action: { presentTimedSnackbar() },
-                        label: { Text("5s timer snackbar") },
-                        loadingLabel: { Text("Showing") }
-                    )
-                    StrataButton(
-                        theme: configuration.theme,
-                        variant: .secondary,
-                        surface: configuration.surfaceStyle,
-                        isLoading: false,
-                        action: { presentUndoSnackbar() },
-                        label: { Text("Undo snackbar") },
-                        loadingLabel: { Text("Showing") }
-                    )
-                }
-            }
+            feedbackLayer
+        }
+    }
+
+    private var resolvedSearchField: some View {
+        if rendersWithoutScrollView {
+            return AnyView(snapshotSearchField)
+        }
+        do {
+            let searchConfiguration = try StrataSearchFieldConfiguration(
+                label: "Search exercises",
+                placeholder: "Search by name",
+                clearLabel: "Clear search",
+                resultSummary: searchText.isEmpty ? "All exercises" : "Matching exercises"
+            )
+            return AnyView(StrataSearchField(
+                theme: configuration.theme,
+                text: $searchText,
+                configuration: searchConfiguration
+            ))
+        } catch {
+            return AnyView(failureView(error))
         }
     }
 
@@ -562,17 +986,20 @@ public struct StrataShowcaseRootView: View {
     }
 
     private var workoutMenu: some View {
+        if rendersWithoutScrollView {
+            return AnyView(
+                Image(systemName: "ellipsis.circle")
+                    .font(.title3)
+                    .foregroundStyle(configuration.theme.foreground)
+                    .accessibilityLabel("More workout actions")
+            )
+        }
         do {
             return AnyView(try StrataMenu(
                 theme: configuration.theme,
                 label: "More workout actions",
                 actions: [
-                    StrataMenuAction(
-                        id: "duplicate",
-                        title: "Duplicate set",
-                        systemImage: "plus",
-                        handler: {}
-                    ),
+                    StrataMenuAction(id: "duplicate", title: "Duplicate set", systemImage: "plus", handler: {}),
                     StrataMenuAction(
                         id: "remove",
                         title: "Remove workout",
@@ -591,7 +1018,8 @@ public struct StrataShowcaseRootView: View {
         do {
             let numberSlot = try StrataNumberSlotConfiguration(
                 label: "Set \(setNumber)",
-                displayValue: "\(setNumber * 8)",
+                displayValue: "8",
+                prefixBadge: "80 kg",
                 unitLabel: "reps",
                 isActive: !isCompleted,
                 isCompleted: isCompleted
@@ -615,21 +1043,28 @@ public struct StrataShowcaseRootView: View {
                 resultSummary: searchText.isEmpty ? "All exercises" : "Matching exercises"
             )
             return AnyView(StrataDockedBar(theme: configuration.theme, style: configuration.surfaceStyle) {
-                HStack(spacing: 12) {
-                    StrataSearchField(
-                        theme: configuration.theme,
-                        text: $searchText,
-                        configuration: searchConfiguration
-                    )
+                HStack(spacing: 8) {
+                    if rendersWithoutScrollView {
+                        snapshotSearchField
+                            .layoutPriority(1)
+                    } else {
+                        StrataSearchField(
+                            theme: configuration.theme,
+                            text: $searchText,
+                            configuration: searchConfiguration
+                        )
+                        .layoutPriority(1)
+                    }
                     StrataButton(
                         theme: configuration.theme,
                         variant: .primary,
                         surface: .solid,
                         isLoading: false,
                         action: { selectedExercise = "New exercise" },
-                        label: { Text("Add") },
-                        loadingLabel: { Text("Adding") }
+                        label: { Text("Done").lineLimit(1).fixedSize(horizontal: true, vertical: false) },
+                        loadingLabel: { Text("Adding").lineLimit(1).fixedSize(horizontal: true, vertical: false) }
                     )
+                    .fixedSize(horizontal: true, vertical: false)
                 }
             })
         } catch {
@@ -637,7 +1072,30 @@ public struct StrataShowcaseRootView: View {
         }
     }
 
+    private var snapshotSearchField: some View {
+        VStack(alignment: .leading, spacing: 5) {
+            HStack(spacing: 8) {
+                Image(systemName: "magnifyingglass")
+                    .foregroundStyle(configuration.theme.secondaryForeground)
+                Text(searchText.isEmpty ? "Search by name" : searchText)
+                    .foregroundStyle(searchText.isEmpty ? configuration.theme.secondaryForeground : configuration.theme.foreground)
+                    .lineLimit(1)
+                Spacer(minLength: 0)
+            }
+            .padding(.horizontal, 12)
+            .frame(minHeight: 44)
+            .strataSurface(theme: configuration.theme, style: configuration.surfaceStyle, cornerRadius: 16, role: .card)
+            Text(searchText.isEmpty ? "All exercises" : "Matching exercises")
+                .font(.footnote)
+                .foregroundStyle(configuration.theme.secondaryForeground)
+                .lineLimit(1)
+        }
+    }
+
     private var resolvedSlider: some View {
+        if rendersWithoutScrollView {
+            return AnyView(snapshotSlider)
+        }
         do {
             return AnyView(try StrataSlider(
                 theme: configuration.theme,
@@ -667,14 +1125,154 @@ public struct StrataShowcaseRootView: View {
         )
     }
 
+    @ViewBuilder
+    private var selectionControls: some View {
+        if rendersWithoutScrollView {
+            snapshotSelectionControls
+        } else {
+            StrataSwitch(theme: configuration.theme, isOn: $isEnabled) {
+                Text("Enable notifications").lineLimit(1)
+            }
+            StrataCheckbox(theme: configuration.theme, isOn: $isChecked) {
+                Text("Use last weight").lineLimit(1)
+            }
+            resolvedRadioGroup
+        }
+    }
+
+    private var snapshotSelectionControls: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            snapshotToggle(title: "Enable notifications", isOn: isEnabled)
+            snapshotCheckbox(title: "Use last weight", isOn: isChecked)
+            VStack(alignment: .leading, spacing: 6) {
+                Text("Training focus")
+                    .font(.subheadline.weight(.semibold))
+                ForEach(["Easy", "Moderate", "Hard"], id: \.self) { value in
+                    HStack(spacing: 8) {
+                        Circle()
+                            .stroke(value.lowercased() == selectedRadio ? configuration.theme.accent : configuration.theme.secondaryForeground, lineWidth: 2)
+                            .frame(width: 18, height: 18)
+                        Text(value)
+                            .lineLimit(1)
+                    }
+                }
+            }
+        }
+    }
+
+    private func snapshotToggle(title: String, isOn: Bool) -> some View {
+        HStack {
+            Text(title)
+                .lineLimit(1)
+            Spacer()
+            Capsule()
+                .fill(isOn ? configuration.theme.accent : configuration.theme.surface(.inset))
+                .frame(width: 48, height: 28)
+                .overlay(alignment: isOn ? .trailing : .leading) {
+                    Circle()
+                        .fill(configuration.theme.onAccent)
+                        .frame(width: 22, height: 22)
+                        .padding(3)
+                }
+        }
+    }
+
+    private func snapshotCheckbox(title: String, isOn: Bool) -> some View {
+        HStack(spacing: 8) {
+            Image(systemName: isOn ? "checkmark.square.fill" : "square")
+                .foregroundStyle(isOn ? configuration.theme.accent : configuration.theme.secondaryForeground)
+            Text(title)
+                .lineLimit(1)
+        }
+    }
+
+    @ViewBuilder
     private var resolvedProgressBar: some View {
-        StrataProgressBar(
+        if rendersWithoutScrollView {
+            snapshotProgressBar
+        } else {
+            StrataProgressBar(
+                theme: configuration.theme,
+                value: configuration.dataState == .loading ? nil : 68,
+                total: 100,
+                label: { Text("Weekly volume") },
+                currentValueLabel: { Text(configuration.dataState == .loading ? "Waiting" : "68%") }
+            )
+        }
+    }
+
+    private var snapshotProgressBar: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack {
+                Text("Weekly volume")
+                    .font(.subheadline.weight(.semibold))
+                Spacer()
+                Text("68%")
+                    .font(.caption.weight(.semibold))
+            }
+            GeometryReader { proxy in
+                ZStack(alignment: .leading) {
+                    Capsule().fill(configuration.theme.surface(.inset))
+                    Capsule()
+                        .fill(configuration.theme.accent)
+                        .frame(width: proxy.size.width * 0.68)
+                }
+            }
+            .frame(height: 10)
+        }
+    }
+
+    private var snapshotSlider: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack {
+                Text("RPE")
+                    .font(.subheadline.weight(.semibold))
+                Spacer()
+                Text(sliderValue.formatted(.number.precision(.fractionLength(1))))
+                    .font(.caption.weight(.semibold))
+            }
+            GeometryReader { proxy in
+                ZStack(alignment: .leading) {
+                    Capsule().fill(configuration.theme.surface(.inset))
+                    Capsule()
+                        .fill(configuration.theme.accent)
+                        .frame(width: proxy.size.width * 0.56)
+                    Circle()
+                        .fill(configuration.theme.onAccent)
+                        .overlay(Circle().stroke(configuration.theme.accent, lineWidth: 2))
+                        .frame(width: 22, height: 22)
+                        .offset(x: proxy.size.width * 0.56 - 11)
+                }
+            }
+            .frame(height: 22)
+        }
+    }
+
+    private var resolvedNotesField: some View {
+        if rendersWithoutScrollView {
+            return AnyView(
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("Notes")
+                        .font(.caption.weight(.semibold))
+                    HStack(spacing: 8) {
+                        Image(systemName: "pencil")
+                            .foregroundStyle(configuration.theme.secondaryForeground)
+                        Text(notes)
+                            .lineLimit(1)
+                        Spacer()
+                    }
+                    .padding(.horizontal, 12)
+                    .frame(minHeight: 44)
+                    .strataSurface(theme: configuration.theme, style: configuration.surfaceStyle, cornerRadius: 16, role: .card)
+                }
+            )
+        }
+        return AnyView(StrataTextField(
             theme: configuration.theme,
-            value: configuration.dataState == .loading ? nil : 68,
-            total: 100,
-            label: { Text("Weekly volume") },
-            currentValueLabel: { Text(configuration.dataState == .loading ? "Waiting" : "68%") }
-        )
+            text: $notes,
+            prompt: Text("Exercise name"),
+            label: { Text("Notes") }
+        ))
     }
 
     private var resolvedList: some View {
@@ -689,18 +1287,10 @@ public struct StrataShowcaseRootView: View {
             id: \.id,
             selection: .single($selectedExercise),
             header: { Text("Recent exercises") },
-            leading: { _ in
-                Image(systemName: "figure.strengthtraining.traditional")
-            },
-            primary: { entry in
-                Text(entry.title)
-            },
-            secondary: { entry in
-                Text(entry.detail)
-            },
-            trailing: { _ in
-                Image(systemName: "chevron.right")
-            },
+            leading: { _ in Image(systemName: "figure.strengthtraining.traditional") },
+            primary: { entry in Text(entry.title).lineLimit(1) },
+            secondary: { entry in Text(entry.detail).lineLimit(1) },
+            trailing: { _ in Image(systemName: "chevron.right") },
             footer: { Text("Select an exercise to continue.") }
         )
     }
@@ -722,7 +1312,9 @@ public struct StrataShowcaseRootView: View {
             resolvedStateView(
                 kind: .loading,
                 title: "Loading workout",
-                message: "Resolving the latest session."
+                message: "Resolving the latest session.",
+                actionTitle: "Restore populated",
+                action: { updateConfiguration(dataState: .populated) }
             )
         case .error:
             resolvedStateView(
@@ -768,18 +1360,6 @@ public struct StrataShowcaseRootView: View {
             axis: axis,
             metrics: configuration.metrics
         ))
-    }
-
-    private func sectionHeading(_ title: String, subtitle: String) -> some View {
-        StrataSectionHeader(
-            theme: configuration.theme,
-            title: title,
-            subtitle: subtitle
-        ) {
-            StrataChip(theme: configuration.theme, tone: .neutral) {
-                Text(configuration.dataState.rawValue.capitalized)
-            }
-        }
     }
 
     private func failureView(_ error: Error) -> some View {
