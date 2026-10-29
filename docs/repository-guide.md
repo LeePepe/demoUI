@@ -59,7 +59,7 @@ Never commit credentials, local evidence or machine-specific identity paths.
 
 The exact shared-ci provider is metadata's single authority; all protocol and
 reusable workflow links match it. The native app pins
-LeePepe/shared-design-system@30112ae881314a525f3ffcb3913a3b02b8d6cbe6 in
+LeePepe/shared-design-system@8b30a919485345da6c9b9c94faa9c79537477376 in
 `.github/repo-contract.json`, `app/Package.swift`, and `app/Package.resolved`.
 The historical Node modules require no package install.
 
