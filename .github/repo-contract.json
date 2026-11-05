@@ -4,8 +4,8 @@
   "shared_ci": "fd8a187ef4872aa1aa69c4e9afec9782183cc02d",
   "dependencies": {
     "shared-design-system": {
-      "version": "30112ae881314a525f3ffcb3913a3b02b8d6cbe6",
-      "ai": "https://github.com/LeePepe/shared-design-system/tree/30112ae881314a525f3ffcb3913a3b02b8d6cbe6/ai/"
+      "version": "b425efb36b0f5ffca46884b7a6b98c18f60d4236",
+      "ai": "https://github.com/LeePepe/shared-design-system/tree/b425efb36b0f5ffca46884b7a6b98c18f60d4236/ai/"
     }
   }
 }

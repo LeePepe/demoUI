@@ -11,7 +11,7 @@ let package = Package(
     dependencies: [
         .package(
             url: "https://github.com/LeePepe/shared-design-system.git",
-            revision: "30112ae881314a525f3ffcb3913a3b02b8d6cbe6"
+            revision: "b425efb36b0f5ffca46884b7a6b98c18f60d4236"
         )
     ],
     targets: [
